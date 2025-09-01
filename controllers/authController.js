@@ -5,8 +5,11 @@ const { sendEmail, emailTemplates } = require('../utils/sendEmail');
 
 // Generate JWT Token
 const sendTokenResponse = (user, statusCode, res) => {
-  // Create token
-  const token = jwt.sign({ id: user._id }, process.env.JWT_SECRET, {
+  // Create token with user verification status
+  const token = jwt.sign({ 
+    id: user._id,
+    isVerified: user.isVerified 
+  }, process.env.JWT_SECRET, {
     expiresIn: process.env.JWT_EXPIRE,
   });
 
@@ -167,36 +170,13 @@ exports.forgotPassword = async (req, res, next) => {
 
     await user.save();
 
-    // Create reset url
-    const resetUrl = `${process.env.FRONTEND_URL}/resetpassword/${resetToken}`;
-
-    // Use enhanced email template
-    const emailTemplate = emailTemplates.passwordResetRequest(resetUrl, user.name);
-
-    try {
-      await sendEmail({
-        email: user.email,
-        subject: emailTemplate.subject,
-        message: emailTemplate.message,
-        html: emailTemplate.html
-      });
-
-      res.status(200).json({
-        success: true,
-        message: 'Email sent'
-      });
-    } catch (error) {
-      console.log(error);
-      user.resetPasswordToken = undefined;
-      user.resetPasswordExpire = undefined;
-
-      await user.save();
-
-      return res.status(500).json({
-        success: false,
-        message: 'Email could not be sent'
-      });
-    }
+    // Return reset token in response instead of sending email
+    res.status(200).json({
+      success: true,
+      message: 'Reset token generated successfully',
+      resetToken: resetToken, // Return the plain token for testing
+      expiresIn: '10 minutes'
+    });
   } catch (error) {
     res.status(400).json({
       success: false,
@@ -234,20 +214,7 @@ exports.resetPassword = async (req, res, next) => {
     user.resetPasswordExpire = undefined;
     await user.save();
 
-    // Send password reset confirmation email
-    try {
-      const emailTemplate = emailTemplates.passwordResetSuccess(user.name);
-      await sendEmail({
-        email: user.email,
-        subject: emailTemplate.subject,
-        message: emailTemplate.message,
-        html: emailTemplate.html
-      });
-    } catch (error) {
-      console.log('Password reset confirmation email failed to send:', error);
-      // Continue with the response even if confirmation email fails
-    }
-
+    // Skip sending confirmation email to avoid using EMAIL_USER/EMAIL_PASS
     sendTokenResponse(user, 200, res);
   } catch (error) {
     res.status(400).json({
@@ -256,6 +223,7 @@ exports.resetPassword = async (req, res, next) => {
     });
   }
 };
+
 
 // @desc    Log user out / clear cookie
 // @route   GET /api/auth/logout

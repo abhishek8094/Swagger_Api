@@ -1,30 +1,75 @@
 const nodemailer = require('nodemailer');
 
 const sendEmail = async (options) => {
-  // Gmail SMTP configuration
-  const transporter = nodemailer.createTransport({
-    service: 'gmail',
-    host: 'smtp.gmail.com',
-    port: 587,
-    secure: false, // true for 465, false for other ports
-    auth: {
-      user: process.env.EMAIL_USER,
-      pass: process.env.EMAIL_PASS,
-    },
-    tls: {
-      rejectUnauthorized: false
+
+  console.log("hello",options);
+  try {
+    // Try multiple Gmail SMTP configurations
+    const transporterConfigs = [
+      // Configuration 1: Standard with TLS
+      {
+        service: 'gmail',
+        host: 'smtp.gmail.com',
+        port: 587,
+        secure: false,
+        auth: {
+          user: process.env.EMAIL_USER,
+          pass: process.env.EMAIL_PASS,
+        },
+        tls: {
+          rejectUnauthorized: false
+        }
+      },
+      // Configuration 2: SSL
+      {
+        service: 'gmail',
+        host: 'smtp.gmail.com',
+        port: 465,
+        secure: true,
+        auth: {
+          user: process.env.EMAIL_USER,
+          pass: process.env.EMAIL_PASS,
+        }
+      }
+    ];
+
+    let lastError = null;
+
+    // Try each configuration until one works
+    for (const config of transporterConfigs) {
+      try {
+        const transporter = nodemailer.createTransport(config);
+        
+        // Verify connection configuration
+        await transporter.verify();
+        console.log('✅ SMTP connection verified successfully');
+
+        const message = {
+          from: `${process.env.EMAIL_FROM_NAME || 'Authentication Service'} <${process.env.EMAIL_USER}>`,
+          to: options.email,
+          subject: options.subject,
+          text: options.message,
+          html: options.html || options.message,
+        };
+
+        const result = await transporter.sendMail(message);
+        console.log('✅ Email sent successfully:', result.messageId);
+        return result;
+      } catch (error) {
+        console.warn(`⚠️ Configuration failed:`, error.message);
+        lastError = error;
+        continue; // Try next configuration
+      }
     }
-  });
 
-  const message = {
-    from: `${process.env.EMAIL_FROM_NAME || 'Authentication Service'} <${process.env.EMAIL_USER}>`,
-    to: options.email,
-    subject: options.subject,
-    text: options.message,
-    html: options.html || options.message,
-  };
+    // If all configurations failed, throw the last error
+    throw lastError;
 
-  await transporter.sendMail(message);
+  } catch (error) {
+    console.error('❌ Email sending failed:', error.message);
+    console.error('Error details:', error);
+    throw error; // Re-throw to be caught by the caller
+  }
 };
 
 // Email templates
@@ -93,7 +138,8 @@ const emailTemplates = {
         </html>
       `
     };
-  }
+  },
+
 };
 
 module.exports = { sendEmail, emailTemplates };

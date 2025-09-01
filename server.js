@@ -56,6 +56,13 @@ const swaggerSpec = swaggerJsdoc(swaggerOptions);
 
 // Routes
 app.use('/api/auth', require('./routes/auth'));
+app.use('/api/products', require('./routes/products'));
+app.use('/api/carousel', require('./routes/carousel'));
+app.use('/api/explore', require('./routes/explore'));
+app.use('/api/trending', require('./routes/trending'));
+
+// Serve static files for uploaded images
+app.use('/uploads', express.static('public/uploads'));
 
 // Swagger route
 app.use('/api-docs', swaggerUi.serve, swaggerUi.setup(swaggerSpec));

@@ -211,7 +211,7 @@ router.get('/me', protect, getMe);
  *                 type: string
  *     responses:
  *       200:
- *         description: Password reset email sent
+ *         description: Reset token generated successfully
  *         content:
  *           application/json:
  *             schema:
@@ -221,6 +221,12 @@ router.get('/me', protect, getMe);
  *                   type: boolean
  *                 message:
  *                   type: string
+ *                 resetToken:
+ *                   type: string
+ *                   description: The reset token to use for password reset
+ *                 expiresIn:
+ *                   type: string
+ *                   description: Token expiration time
  *       404:
  *         description: User not found
  *         content:
@@ -270,6 +276,7 @@ router.post('/forgotpassword', forgotPassword);
  */
 router.put('/resetpassword/:resettoken', resetPassword);
 
+
 /**
  * @swagger
  * /api/auth/logout:
@@ -295,7 +302,7 @@ router.put('/resetpassword/:resettoken', resetPassword);
  *         content:
  *           application/json:
  *             schema:
- *               $ref: '#/components/schemas/Error'
+ *               $ref: '#/components/searches/Error'
  */
 router.get('/logout', protect, logout);
 
