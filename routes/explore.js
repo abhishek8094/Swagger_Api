@@ -83,7 +83,7 @@ const upload = multer({
  *         name: Compression Fit T-Shirt
  *         description: Premium compression fit for optimal performance
  *         price: 39.99
- *         imageUrl: /uploads/explore-123456789.jpg
+ *         imageUrl: http://localhost:3001/uploads/explore-123456789.jpg
  *         category: "Compression Fit"
  *         createdAt: 2023-10-01T10:00:00.000Z
  */
@@ -204,7 +204,7 @@ const upload = multer({
 router.get('/', getExploreCollection);
 
 /**
- * @swagger
+ * @swaggerj
  * /api/explore:
  *   post:
  *     summary: Create new product for explore collection with image upload

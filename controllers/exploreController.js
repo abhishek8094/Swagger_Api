@@ -15,7 +15,7 @@ exports.getExploreCollection = async (req, res, next) => {
     collection.All = allProducts.map(product => ({
       title: product.name,
       price: product.price,
-      image: product.imageUrl,
+      image: `http://localhost:3001${product.imageUrl}`,
       category: product.category
     }));
 
@@ -25,7 +25,7 @@ exports.getExploreCollection = async (req, res, next) => {
       collection[category] = products.map(product => ({
         title: product.name,
         price: product.price,
-        image: product.imageUrl,
+        image: `http://localhost:3001${product.imageUrl}`,
         category: product.category
       }));
     }
@@ -36,10 +36,8 @@ exports.getExploreCollection = async (req, res, next) => {
       data: collection
     });
   } catch (error) {
-    res.status(400).json({
-      success: false,
-      message: error.message
-    });
+    error.statusCode = 400;
+    next(error);
   }
 };
 
@@ -51,10 +49,9 @@ exports.getExploreProduct = async (req, res, next) => {
     const product = await Product.findById(req.params.id);
 
     if (!product || !product.isExplore) {
-      return res.status(404).json({
-        success: false,
-        message: 'Explore product not found'
-      });
+      const error = new Error('Explore product not found');
+      error.statusCode = 404;
+      return next(error);
     }
 
     res.status(200).json({
@@ -62,10 +59,8 @@ exports.getExploreProduct = async (req, res, next) => {
       data: product
     });
   } catch (error) {
-    res.status(400).json({
-      success: false,
-      message: error.message
-    });
+    error.statusCode = 400;
+    next(error);
   }
 };
 
@@ -78,10 +73,9 @@ exports.createExploreProduct = async (req, res, next) => {
 
     // Check if file was uploaded
     if (!req.file) {
-      return res.status(400).json({
-        success: false,
-        message: 'Please upload an image'
-      });
+      const error = new Error('Please upload an image');
+      error.statusCode = 400;
+      return next(error);
     }
 
     // Create image URL
@@ -101,10 +95,8 @@ exports.createExploreProduct = async (req, res, next) => {
       data: product
     });
   } catch (error) {
-    res.status(400).json({
-      success: false,
-      message: error.message
-    });
+    error.statusCode = 400;
+    next(error);
   }
 };
 
@@ -146,10 +138,9 @@ exports.updateExploreProduct = async (req, res, next) => {
     );
 
     if (!product || !product.isExplore) {
-      return res.status(404).json({
-        success: false,
-        message: 'Explore product not found'
-      });
+      const error = new Error('Explore product not found');
+      error.statusCode = 404;
+      return next(error);
     }
 
     res.status(200).json({
@@ -157,10 +148,8 @@ exports.updateExploreProduct = async (req, res, next) => {
       data: product
     });
   } catch (error) {
-    res.status(400).json({
-      success: false,
-      message: error.message
-    });
+    error.statusCode = 400;
+    next(error);
   }
 };
 
@@ -172,10 +161,9 @@ exports.deleteExploreProduct = async (req, res, next) => {
     const product = await Product.findById(req.params.id);
 
     if (!product || !product.isExplore) {
-      return res.status(404).json({
-        success: false,
-        message: 'Explore product not found'
-      });
+      const error = new Error('Explore product not found');
+      error.statusCode = 404;
+      return next(error);
     }
 
     // Delete image file
@@ -193,9 +181,7 @@ exports.deleteExploreProduct = async (req, res, next) => {
       message: 'Explore product deleted successfully'
     });
   } catch (error) {
-    res.status(400).json({
-      success: false,
-      message: error.message
-    });
+    error.statusCode = 400;
+    next(error);
   }
 };

@@ -32,7 +32,7 @@ const sendTokenResponse = (user, statusCode, res) => {
       token,
       user: {
         id: user._id,
-        name: user.name,
+        firstName: user.firstName,
         email: user.email,
         isVerified: user.isVerified
       }
@@ -44,19 +44,18 @@ const sendTokenResponse = (user, statusCode, res) => {
 // @access  Public
 exports.register = async (req, res, next) => {
   try {
-    const { name, email, password } = req.body;
+    const { firstName, email, password } = req.body;
 
-    // Validate name, email & password
-    if (!name || !email || !password) {
-      return res.status(400).json({
-        success: false,
-        message: 'Please provide a name, email and password'
-      });
+    // Validate firstName, email & password
+    if (!firstName || !email || !password) {
+      const error = new Error('Please provide a firstName, email and password');
+      error.statusCode = 400;
+      return next(error);
     }
 
     // Create user
     const user = await User.create({
-      name,
+      firstName,
       email,
       password,
     });
@@ -64,16 +63,13 @@ exports.register = async (req, res, next) => {
     sendTokenResponse(user, 201, res);
   } catch (error) {
     if (error.code === 11000) {
-      return res.status(400).json({
-        success: false,
-        message: 'User already exists with this email'
-      });
+      const err = new Error('User already exists with this email');
+      err.statusCode = 400;
+      return next(err);
     }
     
-    res.status(400).json({
-      success: false,
-      message: error.message
-    });
+    error.statusCode = 400;
+    next(error);
   }
 };
 
@@ -86,38 +82,33 @@ exports.login = async (req, res, next) => {
 
     // Validate email & password
     if (!email || !password) {
-      return res.status(400).json({
-        success: false,
-        message: 'Please provide an email and password'
-      });
+      const error = new Error('Please provide an email and password');
+      error.statusCode = 400;
+      return next(error);
     }
 
     // Check for user
     const user = await User.findOne({ email }).select('+password');
 
     if (!user) {
-      return res.status(401).json({
-        success: false,
-        message: 'Invalid credentials'
-      });
+      const error = new Error('Invalid credentials');
+      error.statusCode = 401;
+      return next(error);
     }
 
     // Check if password matches
     const isMatch = await user.matchPassword(password);
 
     if (!isMatch) {
-      return res.status(401).json({
-        success: false,
-        message: 'Invalid credentials'
-      });
+      const error = new Error('Password is wrong');
+      error.statusCode = 401;
+      return next(error);
     }
 
     sendTokenResponse(user, 200, res);
   } catch (error) {
-    res.status(400).json({
-      success: false,
-      message: error.message
-    });
+    error.statusCode = 400;
+    next(error);
   }
 };
 
@@ -133,10 +124,8 @@ exports.getMe = async (req, res, next) => {
       data: user
     });
   } catch (error) {
-    res.status(400).json({
-      success: false,
-      message: error.message
-    });
+    error.statusCode = 400;
+    next(error);
   }
 };
 
@@ -150,10 +139,9 @@ exports.forgotPassword = async (req, res, next) => {
     const user = await User.findOne({ email });
 
     if (!user) {
-      return res.status(404).json({
-        success: false,
-        message: 'No user found with this email'
-      });
+      const error = new Error('No user found with this email');
+      error.statusCode = 404;
+      return next(error);
     }
 
     // Get reset token
@@ -178,15 +166,13 @@ exports.forgotPassword = async (req, res, next) => {
       expiresIn: '10 minutes'
     });
   } catch (error) {
-    res.status(400).json({
-      success: false,
-      message: error.message
-    });
+    error.statusCode = 400;
+    next(error);
   }
 };
 
 // @desc    Reset password
-// @route   PUT /api/auth/resetpassword/:resettoken
+// @route   POST /api/auth/resetpassword/:resettoken
 // @access  Public
 exports.resetPassword = async (req, res, next) => {
   try {
@@ -202,10 +188,9 @@ exports.resetPassword = async (req, res, next) => {
     });
 
     if (!user) {
-      return res.status(400).json({
-        success: false,
-        message: 'Invalid token'
-      });
+      const error = new Error('Invalid token');
+      error.statusCode = 400;
+      return next(error);
     }
 
     // Set new password
@@ -217,13 +202,62 @@ exports.resetPassword = async (req, res, next) => {
     // Skip sending confirmation email to avoid using EMAIL_USER/EMAIL_PASS
     sendTokenResponse(user, 200, res);
   } catch (error) {
-    res.status(400).json({
-      success: false,
-      message: error.message
-    });
+    error.statusCode = 400;
+    next(error);
   }
 };
 
+
+// @desc    Update user profile
+// @route   POST /api/auth/me
+// @access  Private
+exports.updateProfile = async (req, res, next) => {
+  try {
+    const { firstName, lastName } = req.body;
+
+    // Validate at least one field is provided
+    if (!firstName && !lastName) {
+      const error = new Error('Please provide firstName or lastName to update');
+      error.statusCode = 400;
+      return next(error);
+    }
+
+    // Build update object
+    const updateFields = {};
+    if (firstName) updateFields.firstName = firstName;
+    if (lastName) updateFields.lastName = lastName;
+
+    // Update user
+    const user = await User.findByIdAndUpdate(
+      req.user.id,
+      updateFields,
+      {
+        new: true,
+        runValidators: true
+      }
+    );
+
+    if (!user) {
+      const error = new Error('User not found');
+      error.statusCode = 404;
+      return next(error);
+    }
+
+    res.status(200).json({
+      success: true,
+      data: user
+    });
+  } catch (error) {
+    if (error.code === 11000) {
+      const err = new Error('Duplicate field value entered');
+      err.statusCode = 400;
+      return next(err);
+    }
+    
+    error.statusCode = 400;
+    next(error);
+  }
+};
 
 // @desc    Log user out / clear cookie
 // @route   GET /api/auth/logout
