@@ -10,16 +10,21 @@ exports.getProducts = async (req, res, next) => {
   try {
     const products = await Product.find().sort({ createdAt: -1 });
 
+    // Prefix imageUrl with localhost URL
+    const productsWithFullImageUrl = products.map(product => {
+      const productObj = product.toObject();
+      productObj.imageUrl = `http://localhost:3001${productObj.imageUrl}`;
+      return productObj;
+    });
+
     res.status(200).json({
       success: true,
-      count: products.length,
-      data: products
+      count: productsWithFullImageUrl.length,
+      data: productsWithFullImageUrl
     });
   } catch (error) {
-    res.status(400).json({
-      success: false,
-      message: error.message
-    });
+    error.statusCode = 400;
+    next(error);
   }
 };
 
@@ -31,21 +36,22 @@ exports.getProduct = async (req, res, next) => {
     const product = await Product.findById(req.params.id);
 
     if (!product) {
-      return res.status(404).json({
-        success: false,
-        message: 'Product not found'
-      });
+      const error = new Error('Product not found');
+      error.statusCode = 404;
+      return next(error);
     }
+
+    // Prefix imageUrl with localhost URL
+    const productObj = product.toObject();
+    productObj.imageUrl = `http://localhost:3001${productObj.imageUrl}`;
 
     res.status(200).json({
       success: true,
-      data: product
+      data: productObj
     });
   } catch (error) {
-    res.status(400).json({
-      success: false,
-      message: error.message
-    });
+    error.statusCode = 400;
+    next(error);
   }
 };
 
@@ -58,10 +64,9 @@ exports.createProduct = async (req, res, next) => {
 
     // Check if file was uploaded
     if (!req.file) {
-      return res.status(400).json({
-        success: false,
-        message: 'Please upload an image'
-      });
+      const error = new Error('Please upload an image');
+      error.statusCode = 400;
+      return next(error);
     }
 
     // Create image URL
@@ -76,15 +81,17 @@ exports.createProduct = async (req, res, next) => {
       isExplore: isExplore || false
     });
 
+    // Prefix imageUrl with localhost URL for response
+    const productObj = product.toObject();
+    productObj.imageUrl = `http://localhost:3001${productObj.imageUrl}`;
+
     res.status(201).json({
       success: true,
-      data: product
+      data: productObj
     });
   } catch (error) {
-    res.status(400).json({
-      success: false,
-      message: error.message
-    });
+    error.statusCode = 400;
+    next(error);
   }
 };
 
@@ -128,21 +135,22 @@ exports.updateProduct = async (req, res, next) => {
     );
 
     if (!product) {
-      return res.status(404).json({
-        success: false,
-        message: 'Product not found'
-      });
+      const error = new Error('Product not found');
+      error.statusCode = 404;
+      return next(error);
     }
+
+    // Prefix imageUrl with localhost URL for response
+    const productObj = product.toObject();
+    productObj.imageUrl = `http://localhost:3001${productObj.imageUrl}`;
 
     res.status(200).json({
       success: true,
-      data: product
+      data: productObj
     });
   } catch (error) {
-    res.status(400).json({
-      success: false,
-      message: error.message
-    });
+    error.statusCode = 400;
+    next(error);
   }
 };
 
@@ -154,10 +162,9 @@ exports.deleteProduct = async (req, res, next) => {
     const product = await Product.findById(req.params.id);
 
     if (!product) {
-      return res.status(404).json({
-        success: false,
-        message: 'Product not found'
-      });
+      const error = new Error('Product not found');
+      error.statusCode = 404;
+      return next(error);
     }
 
     // Delete image file
@@ -175,10 +182,50 @@ exports.deleteProduct = async (req, res, next) => {
       message: 'Product deleted successfully'
     });
   } catch (error) {
-    res.status(400).json({
-      success: false,
-      message: error.message
+    error.statusCode = 400;
+    next(error);
+  }
+};
+
+// @desc    Search products
+// @route   GET /api/products/search
+// @access  Public
+exports.searchProducts = async (req, res, next) => {
+  try {
+    const { q, category } = req.query;
+
+    let query = {};
+
+    // Search by name or description
+    if (q) {
+      query.$or = [
+        { name: { $regex: q, $options: 'i' } },
+        { description: { $regex: q, $options: 'i' } }
+      ];
+    }
+
+    // Filter by category
+    if (category) {
+      query.category = category;
+    }
+
+    const products = await Product.find(query).sort({ createdAt: -1 });
+
+    // Prefix imageUrl with localhost URL
+    const productsWithFullImageUrl = products.map(product => {
+      const productObj = product.toObject();
+      productObj.imageUrl = `http://localhost:3001${productObj.imageUrl}`;
+      return productObj;
     });
+
+    res.status(200).json({
+      success: true,
+      count: productsWithFullImageUrl.length,
+      data: productsWithFullImageUrl
+    });
+  } catch (error) {
+    error.statusCode = 400;
+    next(error);
   }
 };
 

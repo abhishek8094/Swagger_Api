@@ -9,7 +9,8 @@ const {
   deleteProduct,
   getExploreCollection,
   getTrendingProducts,
-  createExploreProduct
+  createExploreProduct,
+  searchProducts
 } = require('../controllers/productController');
 
 const router = express.Router();
@@ -74,6 +75,9 @@ const upload = multer({
  *         imageUrl:
  *           type: string
  *           description: The URL of the product image
+ *         category:
+ *           type: string
+ *           description: The product category
  *         createdAt:
  *           type: string
  *           format: date
@@ -124,6 +128,48 @@ const upload = multer({
  *               $ref: '#/components/schemas/Error'
  */
 router.get('/', getProducts);
+
+/**
+ * @swagger
+ * /api/products/search:
+ *   get:
+ *     summary: Search products by name, description, or category
+ *     tags: [Products]
+ *     parameters:
+ *       - in: query
+ *         name: q
+ *         schema:
+ *           type: string
+ *         description: Search term to match product name or description
+ *       - in: query
+ *         name: category
+ *         schema:
+ *           type: string
+ *         description: Filter by product category
+ *     responses:
+ *       200:
+ *         description: Products matching search criteria
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 success:
+ *                   type: boolean
+ *                 count:
+ *                   type: integer
+ *                 data:
+ *                   type: array
+ *                   items:
+ *                     $ref: '#/components/schemas/Product'
+ *       400:
+ *         description: Bad request
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/Error'
+ */
+router.get('/search', searchProducts);
 
 
 
@@ -179,6 +225,7 @@ router.get('/:id', getProduct);
  *               - name
  *               - price
  *               - image
+ *               - category
  *             properties:
  *               name:
  *                 type: string
@@ -189,6 +236,9 @@ router.get('/:id', getProduct);
  *               price:
  *                 type: number
  *                 description: Product price
+ *               category:
+ *                 type: string
+ *                 description: Product category
  *               image:
  *                 type: string
  *                 format: binary
@@ -245,6 +295,9 @@ router.post('/', upload.single('image'), createProduct);
  *               price:
  *                 type: number
  *                 description: Product price
+ *               category:
+ *                 type: string
+ *                 description: Product category
  *               image:
  *                 type: string
  *                 format: binary

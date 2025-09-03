@@ -28,10 +28,8 @@ exports.getTrendingProducts = async (req, res, next) => {
       data: trendingProducts
     });
   } catch (error) {
-    res.status(400).json({
-      success: false,
-      message: error.message
-    });
+    error.statusCode = 400;
+    next(error);
   }
 };
 
@@ -43,10 +41,9 @@ exports.getTrendingProduct = async (req, res, next) => {
     const product = await Product.findById(req.params.id);
 
     if (!product) {
-      return res.status(404).json({
-        success: false,
-        message: 'Trending product not found'
-      });
+      const error = new Error('Trending product not found');
+      error.statusCode = 404;
+      return next(error);
     }
 
     res.status(200).json({
@@ -54,10 +51,8 @@ exports.getTrendingProduct = async (req, res, next) => {
       data: product
     });
   } catch (error) {
-    res.status(400).json({
-      success: false,
-      message: error.message
-    });
+    error.statusCode = 400;
+    next(error);
   }
 };
 
@@ -70,10 +65,9 @@ exports.createTrendingProduct = async (req, res, next) => {
 
     // Check if file was uploaded
     if (!req.files || !req.files.image || req.files.image.length === 0) {
-      return res.status(400).json({
-        success: false,
-        message: 'Please upload an image'
-      });
+      const error = new Error('Please upload an image');
+      error.statusCode = 400;
+      return next(error);
     }
 
     // Create full image URL
@@ -101,10 +95,8 @@ exports.createTrendingProduct = async (req, res, next) => {
       data: product
     });
   } catch (error) {
-    res.status(400).json({
-      success: false,
-      message: error.message
-    });
+    error.statusCode = 400;
+    next(error);
   }
 };
 
@@ -162,10 +154,9 @@ exports.updateTrendingProduct = async (req, res, next) => {
     );
 
     if (!product) {
-      return res.status(404).json({
-        success: false,
-        message: 'Trending product not found'
-      });
+      const error = new Error('Trending product not found');
+      error.statusCode = 404;
+      return next(error);
     }
 
     res.status(200).json({
@@ -173,10 +164,8 @@ exports.updateTrendingProduct = async (req, res, next) => {
       data: product
     });
   } catch (error) {
-    res.status(400).json({
-      success: false,
-      message: error.message
-    });
+    error.statusCode = 400;
+    next(error);
   }
 };
 
@@ -188,10 +177,9 @@ exports.deleteTrendingProduct = async (req, res, next) => {
     const product = await Product.findById(req.params.id);
 
     if (!product) {
-      return res.status(404).json({
-        success: false,
-        message: 'Trending product not found'
-      });
+      const error = new Error('Trending product not found');
+      error.statusCode = 404;
+      return next(error);
     }
 
     // Delete image file
@@ -217,9 +205,7 @@ exports.deleteTrendingProduct = async (req, res, next) => {
       message: 'Trending product deleted successfully'
     });
   } catch (error) {
-    res.status(400).json({
-      success: false,
-      message: error.message
-    });
+    error.statusCode = 400;
+    next(error);
   }
 };

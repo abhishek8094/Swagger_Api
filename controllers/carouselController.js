@@ -21,10 +21,8 @@ exports.getCarouselImages = async (req, res, next) => {
       data: images
     });
   } catch (error) {
-    res.status(400).json({
-      success: false,
-      message: error.message
-    });
+    error.statusCode = 400;
+    next(error);
   }
 };
 
@@ -35,10 +33,9 @@ exports.addCarouselImage = async (req, res, next) => {
   try {
     // Check if file was uploaded
     if (!req.file) {
-      return res.status(400).json({
-        success: false,
-        message: 'Please upload an image'
-      });
+      const error = new Error('Please upload an image');
+      error.statusCode = 400;
+      return next(error);
     }
 
     // Create image URL
@@ -57,10 +54,8 @@ exports.addCarouselImage = async (req, res, next) => {
       }
     });
   } catch (error) {
-    res.status(400).json({
-      success: false,
-      message: error.message
-    });
+    error.statusCode = 400;
+    next(error);
   }
 };
 
@@ -72,10 +67,9 @@ exports.updateCarouselImage = async (req, res, next) => {
     const carouselImage = await Carousel.findById(req.params.id);
 
     if (!carouselImage) {
-      return res.status(404).json({
-        success: false,
-        message: 'Carousel image not found'
-      });
+      const error = new Error('Carousel image not found');
+      error.statusCode = 404;
+      return next(error);
     }
 
     // If new image uploaded, update image URL
@@ -103,10 +97,8 @@ exports.updateCarouselImage = async (req, res, next) => {
       }
     });
   } catch (error) {
-    res.status(400).json({
-      success: false,
-      message: error.message
-    });
+    error.statusCode = 400;
+    next(error);
   }
 };
 
@@ -118,10 +110,9 @@ exports.deleteCarouselImage = async (req, res, next) => {
     const carouselImage = await Carousel.findById(req.params.id);
 
     if (!carouselImage) {
-      return res.status(404).json({
-        success: false,
-        message: 'Carousel image not found'
-      });
+      const error = new Error('Carousel image not found');
+      error.statusCode = 404;
+      return next(error);
     }
 
     // Delete image file
@@ -139,9 +130,7 @@ exports.deleteCarouselImage = async (req, res, next) => {
       message: 'Carousel image deleted successfully'
     });
   } catch (error) {
-    res.status(400).json({
-      success: false,
-      message: error.message
-    });
+    error.statusCode = 400;
+    next(error);
   }
 };

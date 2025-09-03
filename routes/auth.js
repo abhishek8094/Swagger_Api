@@ -3,6 +3,7 @@ const {
   register,
   login,
   getMe,
+  updateProfile,
   forgotPassword,
   resetPassword,
   logout
@@ -24,9 +25,12 @@ const router = express.Router();
  *         id:
  *           type: string
  *           description: The auto-generated id of the user
- *         name:
+ *         firstName:
  *           type: string
- *           description: The user's name
+ *           description: The user's first name
+ *         lastName:
+ *           type: string
+ *           description: The user's last name
  *         email:
  *           type: string
  *           description: The user's email
@@ -46,12 +50,13 @@ const router = express.Router();
  *           description: The date the user was updated
  *       example:
  *         id: d5fE_asz
- *         name: John Doe
+ *         firstName: John
+ *         lastName: Doe
  *         email: john@example.com
  *         isVerified: false
  *         createdAt: 2023-10-01T10:00:00.000Z
  *         updatedAt: 2023-10-01T10:00:00.000Z
- * 
+ *
  *     AuthResponse:
  *       type: object
  *       properties:
@@ -64,13 +69,13 @@ const router = express.Router();
  *           properties:
  *             id:
  *               type: string
- *             name:
+ *             firstName:
  *               type: string
  *             email:
  *               type: string
  *             isVerified:
  *               type: boolean
- * 
+ *
  *     Error:
  *       type: object
  *       properties:
@@ -78,7 +83,7 @@ const router = express.Router();
  *           type: boolean
  *         message:
  *           type: string
- * 
+ *
  *   securitySchemes:
  *     bearerAuth:
  *       type: http
@@ -106,11 +111,11 @@ const router = express.Router();
  *           schema:
  *             type: object
  *             required:
- *               - name
+ *               - firstName
  *               - email
  *               - password
  *             properties:
- *               name:
+ *               firstName:
  *                 type: string
  *               email:
  *                 type: string
@@ -160,7 +165,7 @@ router.post('/register', register);
  *             schema:
  *               $ref: '#/components/schemas/AuthResponse'
  *       401:
- *         description: Invalid credentials
+ *         description: Invalid credentials or password is wrong
  *         content:
  *           application/json:
  *             schema:
@@ -191,6 +196,63 @@ router.post('/login', login);
  *               $ref: '#/components/schemas/Error'
  */
 router.get('/me', protect, getMe);
+
+/**
+ * @swagger
+ * /api/auth/me:
+ *   post:
+ *     summary: Update current user profile
+ *     tags: [Authentication]
+ *     security:
+ *       - bearerAuth: []
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             properties:
+ *               firstName:
+ *                 type: string
+ *                 description: The user's first name
+ *               lastName:
+ *                 type: string
+ *                 description: The user's last name
+ *             example:
+ *               firstName: John
+ *               lastName: Doe
+ *     responses:
+ *       200:
+ *         description: User profile updated successfully
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 success:
+ *                   type: boolean
+ *                 data:
+ *                   $ref: '#/components/schemas/User'
+ *       400:
+ *         description: Bad request or validation error
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/Error'
+ *       401:
+ *         description: Not authorized
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/Error'
+ *       404:
+ *         description: User not found
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/Error'
+ */
+router.post('/me', protect, updateProfile);
 
 /**
  * @swagger
@@ -239,7 +301,7 @@ router.post('/forgotpassword', forgotPassword);
 /**
  * @swagger
  * /api/auth/resetpassword/{resettoken}:
- *   put:
+ *   post:
  *     summary: Reset password
  *     tags: [Authentication]
  *     parameters:
@@ -274,7 +336,7 @@ router.post('/forgotpassword', forgotPassword);
  *             schema:
  *               $ref: '#/components/schemas/Error'
  */
-router.put('/resetpassword/:resettoken', resetPassword);
+router.post('/resetpassword/:resettoken', resetPassword);
 
 
 /**
