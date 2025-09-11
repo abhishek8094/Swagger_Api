@@ -33,18 +33,20 @@ const sendTokenResponse = (user, statusCode, res) => {
       user: {
         id: user._id,
         firstName: user.firstName,
+        lastName: user.lastName,
         email: user.email,
-        isVerified: user.isVerified
+        isVerified: user.isVerified,
+        role: user.role
       }
     });
 };
 
 // @desc    Register user
 // @route   POST /api/auth/register
-// @access  Public
+// @access  Public for user, Private for admin
 exports.register = async (req, res, next) => {
   try {
-    const { firstName, email, password } = req.body;
+    const { firstName, lastName, email, password, role } = req.body;
 
     // Validate firstName, email & password
     if (!firstName || !email || !password) {
@@ -53,11 +55,41 @@ exports.register = async (req, res, next) => {
       return next(error);
     }
 
+    // Default role to 'user' if not provided
+    const userRole = role || 'user';
+
+    // If registering as admin, check if requester is authenticated and is admin
+    if (userRole === 'admin') {
+      // Check if there are any existing admins
+      const existingAdmin = await User.findOne({ role: 'admin' });
+
+      if (!existingAdmin) {
+        // Allow first admin registration without authentication
+        // This bypasses the restriction for the initial admin setup
+      } else {
+        // Check if user is authenticated (req.user exists from protect middleware)
+        if (!req.user) {
+          const error = new Error('Authentication required to register as admin');
+          error.statusCode = 401;
+          return next(error);
+        }
+
+        // Check if the authenticated user is admin
+        if (req.user.role !== 'admin') {
+          const error = new Error('Only admins can register other admins');
+          error.statusCode = 403;
+          return next(error);
+        }
+      }
+    }
+
     // Create user
     const user = await User.create({
       firstName,
+      lastName,
       email,
       password,
+      role: userRole,
     });
 
     sendTokenResponse(user, 201, res);
@@ -67,7 +99,7 @@ exports.register = async (req, res, next) => {
       err.statusCode = 400;
       return next(err);
     }
-    
+
     error.statusCode = 400;
     next(error);
   }
@@ -117,7 +149,7 @@ exports.login = async (req, res, next) => {
 // @access  Private
 exports.getMe = async (req, res, next) => {
   try {
-    const user = await User.findById(req.user.id);
+    const user = await User.findById(req.user.id).select('+password');
 
     res.status(200).json({
       success: true,
@@ -235,7 +267,7 @@ exports.updateProfile = async (req, res, next) => {
         new: true,
         runValidators: true
       }
-    );
+    ).select('+password');
 
     if (!user) {
       const error = new Error('User not found');
@@ -253,7 +285,7 @@ exports.updateProfile = async (req, res, next) => {
       err.statusCode = 400;
       return next(err);
     }
-    
+
     error.statusCode = 400;
     next(error);
   }
@@ -272,4 +304,153 @@ exports.logout = async (req, res, next) => {
     success: true,
     message: 'User logged out successfully'
   });
+};
+
+// @desc    Create user by admin
+// @route   POST /api/auth/users
+// @access  Private/Admin
+exports.createUserByAdmin = async (req, res, next) => {
+  try {
+    const { firstName, lastName, email, password, role } = req.body;
+
+    // Validate firstName, email & password
+    if (!firstName || !email || !password) {
+      const error = new Error('Please provide a firstName, email and password');
+      error.statusCode = 400;
+      return next(error);
+    }
+
+    // Default role to 'user' if not provided
+    const userRole = role || 'user';
+
+    // Create user
+    const user = await User.create({
+      firstName,
+      lastName,
+      email,
+      password,
+      role: userRole,
+    });
+
+    // Fetch user with password for response
+    const userResponse = await User.findById(user._id).select('+password');
+
+    res.status(201).json({
+      success: true,
+      data: userResponse
+    });
+  } catch (error) {
+    if (error.code === 11000) {
+      const err = new Error('User already exists with this email');
+      err.statusCode = 400;
+      return next(err);
+    }
+
+    error.statusCode = 400;
+    next(error);
+  }
+};
+
+// @desc    Get all users
+// @route   GET /api/auth/users
+// @access  Private/Admin
+exports.getAllUsers = async (req, res, next) => {
+  try {
+    const users = await User.find().select('+password');
+
+    res.status(200).json({
+      success: true,
+      count: users.length,
+      data: users
+    });
+  } catch (error) {
+    error.statusCode = 400;
+    next(error);
+  }
+};
+
+
+
+// @desc    Update user by ID
+// @route   POST /api/auth/users/:id
+// @access  Private/Admin
+exports.updateUserById = async (req, res, next) => {
+  try {
+    const { firstName, lastName, email, role } = req.body;
+
+    // Build update object
+    const updateFields = {};
+    if (firstName !== undefined) updateFields.firstName = firstName;
+    if (lastName !== undefined) updateFields.lastName = lastName;
+    if (email !== undefined) updateFields.email = email;
+    if (role !== undefined) updateFields.role = role;
+
+    // Validate at least one field is provided
+    if (Object.keys(updateFields).length === 0) {
+      const error = new Error('Please provide at least one field to update');
+      error.statusCode = 400;
+      return next(error);
+    }
+
+    const user = await User.findByIdAndUpdate(
+      req.params.id,
+      updateFields,
+      {
+        new: true,
+        runValidators: true
+      }
+    ).select('-password');
+
+    if (!user) {
+      const error = new Error('User not found');
+      error.statusCode = 404;
+      return next(error);
+    }
+
+    res.status(200).json({
+      success: true,
+      data: user
+    });
+  } catch (error) {
+    if (error.code === 11000) {
+      const err = new Error('Duplicate field value entered');
+      err.statusCode = 400;
+      return next(err);
+    }
+
+    error.statusCode = 400;
+    next(error);
+  }
+};
+
+// @desc    Delete user by ID
+// @route   POST /api/auth/users/:id/delete
+// @access  Private/Admin
+exports.deleteUserById = async (req, res, next) => {
+  try {
+    const user = await User.findById(req.params.id);
+
+    if (!user) {
+      const error = new Error('User not found');
+      error.statusCode = 404;
+      return next(error);
+    }
+
+    // Prevent admin from deleting themselves
+    if (req.user.id === req.params.id) {
+      const error = new Error('You cannot delete your own account');
+      error.statusCode = 400;
+      return next(error);
+    }
+
+    await User.findByIdAndDelete(req.params.id);
+
+    res.status(200).json({
+      success: true,
+      message: 'User deleted successfully'
+    });
+  } catch (error) {
+    error.statusCode = 400;
+    next(error);
+  }
 };

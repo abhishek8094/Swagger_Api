@@ -6,9 +6,13 @@ const {
   updateProfile,
   forgotPassword,
   resetPassword,
-  logout
+  logout,
+  createUserByAdmin,
+  getAllUsers,
+  updateUserById,
+  deleteUserById
 } = require('../controllers/authController');
-const { protect } = require('../middleware/auth');
+const { protect, authorize } = require('../middleware/auth');
 
 const router = express.Router();
 
@@ -40,6 +44,10 @@ const router = express.Router();
  *         isVerified:
  *           type: boolean
  *           description: Whether the user is verified
+ *         role:
+ *           type: string
+ *           enum: [user, admin]
+ *           description: User role
  *         createdAt:
  *           type: string
  *           format: date
@@ -53,7 +61,9 @@ const router = express.Router();
  *         firstName: John
  *         lastName: Doe
  *         email: john@example.com
+ *         password: 12345
  *         isVerified: false
+ *         role: user
  *         createdAt: 2023-10-01T10:00:00.000Z
  *         updatedAt: 2023-10-01T10:00:00.000Z
  *
@@ -117,10 +127,17 @@ const router = express.Router();
  *             properties:
  *               firstName:
  *                 type: string
+ *               lastName:
+ *                 type: string
  *               email:
  *                 type: string
  *               password:
  *                 type: string
+ *               role:
+ *                 type: string
+ *                 enum: [user, admin]
+ *                 default: user
+ *                 description: User role (admin registration requires authentication)
  *     responses:
  *       201:
  *         description: User registered successfully
@@ -134,8 +151,246 @@ const router = express.Router();
  *           application/json:
  *             schema:
  *               $ref: '#/components/schemas/Error'
+ *       401:
+ *         description: Authentication required for admin registration
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/Error'
+ *       403:
+ *         description: Only admins can register other admins
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/Error'
  */
 router.post('/register', register);
+
+/**
+ * @swagger
+ * /api/auth/users:
+ *   get:
+ *     summary: Get all users
+ *     tags: [Authentication]
+ *     security:
+ *       - bearerAuth: []
+ *     responses:
+ *       200:
+ *         description: List of users
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 success:
+ *                   type: boolean
+ *                 count:
+ *                   type: integer
+ *                 data:
+ *                   type: array
+ *                   items:
+ *                     $ref: '#/components/schemas/User'
+ *       401:
+ *         description: Not authorized
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/Error'
+ *       403:
+ *         description: Forbidden
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/Error'
+ *   post:
+ *     summary: Create a new user by admin
+ *     tags: [Authentication]
+ *     security:
+ *       - bearerAuth: []
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required:
+ *               - firstName
+ *               - email
+ *               - password
+ *             properties:
+ *               firstName:
+ *                 type: string
+ *               email:
+ *                 type: string
+ *               password:
+ *                 type: string
+ *               role:
+ *                 type: string
+ *                 enum: [user, admin]
+ *                 default: user
+ *     responses:
+ *       201:
+ *         description: User created successfully
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 success:
+ *                   type: boolean
+ *                 data:
+ *                   $ref: '#/components/schemas/User'
+ *       400:
+ *         description: Bad request
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/Error'
+ *       401:
+ *         description: Not authorized
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/Error'
+ *       403:
+ *         description: Forbidden
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/Error'
+ */
+router.get('/users', protect, authorize('admin'), getAllUsers);
+router.post('/users', protect, authorize('admin'), createUserByAdmin);
+
+
+
+/**
+ * @swagger
+ * /api/auth/users/{id}:
+ *   post:
+ *     summary: Update user by ID
+ *     tags: [Authentication]
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         schema:
+ *           type: string
+ *         required: true
+ *         description: User ID
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             properties:
+ *               firstName:
+ *                 type: string
+ *                 description: The user's first name
+ *               lastName:
+ *                 type: string
+ *                 description: The user's last name
+ *               email:
+ *                 type: string
+ *                 description: The user's email
+ *               role:
+ *                 type: string
+ *                 enum: [user, admin]
+ *                 description: User role
+ *     responses:
+ *       200:
+ *         description: User updated successfully
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 success:
+ *                   type: boolean
+ *                 data:
+ *                   $ref: '#/components/schemas/User'
+ *       400:
+ *         description: Bad request
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/Error'
+ *       401:
+ *         description: Not authorized
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/Error'
+ *       403:
+ *         description: Forbidden
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/Error'
+ *       404:
+ *         description: User not found
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/Error'
+ */
+router.post('/users/:id', protect, authorize('admin'), updateUserById);
+
+/**
+ * @swagger
+ * /api/auth/users/{id}/delete:
+ *   post:
+ *     summary: Delete user by ID
+ *     tags: [Authentication]
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         schema:
+ *           type: string
+ *         required: true
+ *         description: User ID
+ *     responses:
+ *       200:
+ *         description: User deleted successfully
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 success:
+ *                   type: boolean
+ *                 message:
+ *                   type: string
+ *       400:
+ *         description: Bad request
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/Error'
+ *       401:
+ *         description: Not authorized
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/Error'
+ *       403:
+ *         description: Forbidden
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/Error'
+ *       404:
+ *         description: User not found
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/Error'
+ */
+router.post('/users/:id/delete', protect, authorize('admin'), deleteUserById);
 
 /**
  * @swagger

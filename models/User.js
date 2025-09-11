@@ -35,24 +35,26 @@ const userSchema = new mongoose.Schema({
     default: false
   },
   verificationToken: String,
-  verificationExpire: Date
+  verificationExpire: Date,
+  role: {
+    type: String,
+    enum: ['user', 'admin'],
+    default: 'user'
+  }
 }, {
   timestamps: true
 });
 
-// Encrypt password using bcrypt
+// Store password as plain text (for demonstration purposes only)
+// WARNING: This is highly insecure and not recommended for production
 userSchema.pre('save', async function(next) {
-  if (!this.isModified('password')) {
-    next();
-  }
-  
-  const salt = await bcrypt.genSalt(10);
-  this.password = await bcrypt.hash(this.password, salt);
+  // Password is stored as plain text
+  next();
 });
 
-// Match user entered password to hashed password in database
+// Match user entered password to plain text password in database
 userSchema.methods.matchPassword = async function(enteredPassword) {
-  return await bcrypt.compare(enteredPassword, this.password);
+  return enteredPassword === this.password;
 };
 
 module.exports = mongoose.model('User', userSchema);

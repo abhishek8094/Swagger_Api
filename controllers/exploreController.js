@@ -13,6 +13,7 @@ exports.getExploreCollection = async (req, res, next) => {
     // Get all products for "All" category
     const allProducts = await Product.find({ isExplore: true }).sort({ createdAt: -1 }).select('name price imageUrl category');
     collection.All = allProducts.map(product => ({
+      id: product._id,
       title: product.name,
       price: product.price,
       image: `http://localhost:3001${product.imageUrl}`,
@@ -23,6 +24,7 @@ exports.getExploreCollection = async (req, res, next) => {
     for (const category of categories.slice(1)) { // Skip 'All'
       const products = await Product.find({ category, isExplore: true }).sort({ createdAt: -1 }).select('name price imageUrl category');
       collection[category] = products.map(product => ({
+        id: product._id,
         title: product.name,
         price: product.price,
         image: `http://localhost:3001${product.imageUrl}`,

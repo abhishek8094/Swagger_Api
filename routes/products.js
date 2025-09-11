@@ -56,9 +56,11 @@ const upload = multer({
  *     Product:
  *       type: object
  *       required:
- *         - name
- *         - price
- *         - imageUrl
+ *       - name
+ *       - price
+ *       - size
+ *       - imageUrl
+ *       - category
  *       properties:
  *         id:
  *           type: string
@@ -72,6 +74,9 @@ const upload = multer({
  *         price:
  *           type: number
  *           description: The product price
+ *         size:
+ *           type: string
+ *           description: The product size
  *         imageUrl:
  *           type: string
  *           description: The URL of the product image
@@ -87,6 +92,7 @@ const upload = multer({
  *         name: Sample Product
  *         description: This is a sample product
  *         price: 29.99
+ *         size: M
  *         imageUrl: /uploads/product-123456789.jpg
  *         createdAt: 2023-10-01T10:00:00.000Z
  */
@@ -224,6 +230,7 @@ router.get('/:id', getProduct);
  *             required:
  *               - name
  *               - price
+ *               - size
  *               - image
  *               - category
  *             properties:
@@ -236,6 +243,9 @@ router.get('/:id', getProduct);
  *               price:
  *                 type: number
  *                 description: Product price
+ *               size:
+ *                 type: string
+ *                 description: Product size
  *               category:
  *                 type: string
  *                 description: Product category
@@ -295,6 +305,9 @@ router.post('/', upload.single('image'), createProduct);
  *               price:
  *                 type: number
  *                 description: Product price
+ *               size:
+ *                 type: string
+ *                 description: Product size
  *               category:
  *                 type: string
  *                 description: Product category

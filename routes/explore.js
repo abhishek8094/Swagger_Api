@@ -121,6 +121,8 @@ const upload = multer({
  *                       items:
  *                         type: object
  *                         properties:
+ *                           id:
+ *                             type: string
  *                           title:
  *                             type: string
  *                           price:
@@ -134,6 +136,8 @@ const upload = multer({
  *                       items:
  *                         type: object
  *                         properties:
+ *                           id:
+ *                             type: string
  *                           title:
  *                             type: string
  *                           price:
@@ -147,6 +151,8 @@ const upload = multer({
  *                       items:
  *                         type: object
  *                         properties:
+ *                           id:
+ *                             type: string
  *                           title:
  *                             type: string
  *                           price:
@@ -160,6 +166,8 @@ const upload = multer({
  *                       items:
  *                         type: object
  *                         properties:
+ *                           id:
+ *                             type: string
  *                           title:
  *                             type: string
  *                           price:
@@ -173,6 +181,8 @@ const upload = multer({
  *                       items:
  *                         type: object
  *                         properties:
+ *                           id:
+ *                             type: string
  *                           title:
  *                             type: string
  *                           price:
@@ -186,6 +196,8 @@ const upload = multer({
  *                       items:
  *                         type: object
  *                         properties:
+ *                           id:
+ *                             type: string
  *                           title:
  *                             type: string
  *                           price:

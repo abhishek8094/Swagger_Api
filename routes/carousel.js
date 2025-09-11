@@ -96,9 +96,18 @@ const upload = multer({
  *                 data:
  *                   type: array
  *                   items:
- *                     type: string
- *                     description: Carousel image URL
- *                   example: ["/uploads/image1.jpg", "/uploads/image2.jpg"]
+ *                     type: object
+ *                     properties:
+ *                       id:
+ *                         type: string
+ *                         description: The unique ID of the carousel image
+ *                       imageUrl:
+ *                         type: string
+ *                         description: The full URL of the carousel image
+ *                     example:
+ *                       id: "60d5ecb74b24c72b8c8b4567"
+ *                       imageUrl: "http://localhost:3000/uploads/image1.jpg"
+ *                   example: [{"id": "60d5ecb74b24c72b8c8b4567", "imageUrl": "http://localhost:3000/uploads/image1.jpg"}]
  *       400:
  *         description: Bad request
  *         content:
@@ -142,9 +151,15 @@ router.get('/', getCarouselImages);
  *                 data:
  *                   type: object
  *                   properties:
+ *                     id:
+ *                       type: string
+ *                       description: The unique ID of the uploaded carousel image
  *                     imageUrl:
  *                       type: string
  *                       description: URL of the uploaded image
+ *                   example:
+ *                     id: "60d5ecb74b24c72b8c8b4567"
+ *                     imageUrl: "/uploads/image1.jpg"
  *       400:
  *         description: Bad request
  *         content:
@@ -156,24 +171,22 @@ router.post('/', upload.single('image'), addCarouselImage);
 
 /**
  * @swagger
- * /api/carousel/{id}:
- *   put:
+ * /api/carousel/update:
+ *   post:
  *     summary: Update carousel image
  *     tags: [Carousel]
- *     parameters:
- *       - in: path
- *         name: id
- *         schema:
- *           type: string
- *         required: true
- *         description: The carousel image id
  *     requestBody:
  *       required: true
  *       content:
  *         multipart/form-data:
  *           schema:
  *             type: object
+ *             required:
+ *               - id
  *             properties:
+ *               id:
+ *                 type: string
+ *                 description: The carousel image id
  *               image:
  *                 type: string
  *                 format: binary
@@ -203,21 +216,26 @@ router.post('/', upload.single('image'), addCarouselImage);
  *             schema:
  *               $ref: '#/components/schemas/Error'
  */
-router.put('/:id', upload.single('image'), updateCarouselImage);
+router.post('/update', upload.single('image'), updateCarouselImage);
 
 /**
  * @swagger
- * /api/carousel/{id}:
- *   delete:
+ * /api/carousel/delete:
+ *   post:
  *     summary: Delete carousel image
  *     tags: [Carousel]
- *     parameters:
- *       - in: path
- *         name: id
- *         schema:
- *           type: string
- *         required: true
- *         description: The carousel image id
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required:
+ *               - id
+ *             properties:
+ *               id:
+ *                 type: string
+ *                 description: The carousel image id
  *     responses:
  *       200:
  *         description: Carousel image deleted successfully
@@ -237,6 +255,6 @@ router.put('/:id', upload.single('image'), updateCarouselImage);
  *             schema:
  *               $ref: '#/components/schemas/Error'
  */
-router.delete('/:id', deleteCarouselImage);
+router.post('/delete', deleteCarouselImage);
 
 module.exports = router;
