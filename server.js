@@ -91,18 +91,8 @@ app.use('*', (req, res, next) => {
 // Error handling middleware
 app.use(errorHandler);
 
-const PORT = process.env.PORT || 3001;
-
-const server = app.listen(PORT, () => {
-  console.log(`Server running on port ${PORT}`);
-  console.log(`Swagger documentation available at http://localhost:${PORT}/api-docs`);
-});
-
-// Handle unhandled promise rejections
-process.on('unhandledRejection', (err, promise) => {
-  console.log(`Error: ${err.message}`);
-  // Close server & exit process
-  server.close(() => process.exit(1));
-});
+// For Vercel serverless functions, we don't need to listen on a port
+// The app is exported and Vercel will handle the serverless function execution
+console.log('Server configured for Vercel serverless deployment');
 
 module.exports = app;
