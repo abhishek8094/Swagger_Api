@@ -7,13 +7,16 @@ const fs = require('fs');
 // @access  Public
 exports.getCarouselImages = async (req, res, next) => {
   try {
-    const carouselImages = await Carousel.find()
+const carouselImages = await Carousel.find()
       .sort({ createdAt: -1 })
       .limit(10)
       .select('imageUrl');
 
     const baseUrl = `${req.protocol}://${req.get('host')}`;
-    const images = carouselImages.map(item => `${baseUrl}${item.imageUrl}`);
+    const images = carouselImages.map(item => ({
+      id: item._id,
+      imageUrl: `${baseUrl}${item.imageUrl}`
+    }));
 
     res.status(200).json({
       success: true,
@@ -50,6 +53,7 @@ exports.addCarouselImage = async (req, res, next) => {
       success: true,
       message: 'Carousel image uploaded successfully',
       data: {
+        id: carouselImage._id,
         imageUrl: imageUrl
       }
     });
@@ -60,11 +64,11 @@ exports.addCarouselImage = async (req, res, next) => {
 };
 
 // @desc    Update carousel image
-// @route   PUT /api/carousel/:id
+// @route   POST /api/carousel/update
 // @access  Public
 exports.updateCarouselImage = async (req, res, next) => {
   try {
-    const carouselImage = await Carousel.findById(req.params.id);
+    const carouselImage = await Carousel.findById(req.body.id);
 
     if (!carouselImage) {
       const error = new Error('Carousel image not found');
@@ -103,11 +107,11 @@ exports.updateCarouselImage = async (req, res, next) => {
 };
 
 // @desc    Delete carousel image
-// @route   DELETE /api/carousel/:id
+// @route   POST /api/carousel/delete
 // @access  Public
 exports.deleteCarouselImage = async (req, res, next) => {
   try {
-    const carouselImage = await Carousel.findById(req.params.id);
+    const carouselImage = await Carousel.findById(req.body.id);
 
     if (!carouselImage) {
       const error = new Error('Carousel image not found');
@@ -123,7 +127,7 @@ exports.deleteCarouselImage = async (req, res, next) => {
       }
     }
 
-    await Carousel.findByIdAndDelete(req.params.id);
+    await Carousel.findByIdAndDelete(req.body.id);
 
     res.status(200).json({
       success: true,

@@ -17,6 +17,11 @@ const productSchema = new mongoose.Schema({
     required: [true, 'Please add a price'],
     min: [0, 'Price cannot be negative']
   },
+  size: {
+    type: String,
+    enum: ['S', 'M', 'L', 'XL'],
+    required: [true, 'Please add a product size']
+  },
   imageUrl: {
     type: String,
     required: [true, 'Please add an image URL']

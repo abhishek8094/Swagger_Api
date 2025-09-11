@@ -60,7 +60,7 @@ exports.getProduct = async (req, res, next) => {
 // @access  Public
 exports.createProduct = async (req, res, next) => {
   try {
-    const { name, description, price, category, isExplore } = req.body;
+    const { name, description, price, category, isExplore, size } = req.body;
 
     // Check if file was uploaded
     if (!req.file) {
@@ -76,6 +76,7 @@ exports.createProduct = async (req, res, next) => {
       name,
       description,
       price: parseFloat(price),
+      size,
       category,
       imageUrl,
       isExplore: isExplore || false
@@ -102,13 +103,14 @@ exports.createProduct = async (req, res, next) => {
 // @access  Public
 exports.updateProduct = async (req, res, next) => {
   try {
-    const { name, description, price, category } = req.body;
+    const { name, description, price, category, size } = req.body;
 
     let updateData = {
       name,
       description,
       price: parseFloat(price),
-      category
+      category,
+      size
     };
 
     // If new image uploaded, update image URL

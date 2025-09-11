@@ -10,10 +10,11 @@ exports.getTrendingProducts = async (req, res, next) => {
     const products = await Product.find()
       .sort({ createdAt: -1 })
       .limit(10)
-      .select('name description price imageUrl subImg category');
+      .select('_id name description price imageUrl subImg category');
 
     const baseUrl = `${req.protocol}://${req.get('host')}`;
     const trendingProducts = products.map(product => ({
+      id: product._id,
       title: product.name,
       description: product.description,
       price: product.price,
@@ -101,7 +102,7 @@ exports.createTrendingProduct = async (req, res, next) => {
 };
 
 // @desc    Update trending product
-// @route   PUT /api/trending/:id
+// @route   POST /api/trending/update/:id
 // @access  Public
 exports.updateTrendingProduct = async (req, res, next) => {
   try {

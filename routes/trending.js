@@ -198,8 +198,8 @@ router.get('/:id', getTrendingProduct);
 
 /**
  * @swagger
- * /api/trending/{id}:
- *   put:
+ * /api/trending/update/{id}:
+ *   post:
  *     summary: Update trending product
  *     tags: [Trending]
  *     parameters:
@@ -255,15 +255,15 @@ router.get('/:id', getTrendingProduct);
  *             schema:
  *               $ref: '#/components/schemas/Error'
  */
-router.put('/:id', upload.fields([
+router.post('/update/:id', upload.fields([
   { name: 'image', maxCount: 1 },
   { name: 'subImg', maxCount: 1 }
 ]), updateTrendingProduct);
 
 /**
  * @swagger
- * /api/trending/{id}:
- *   delete:
+ * /api/trending/delete/{id}:
+ *   post:
  *     summary: Delete trending product
  *     tags: [Trending]
  *     parameters:
@@ -292,6 +292,6 @@ router.put('/:id', upload.fields([
  *             schema:
  *               $ref: '#/components/schemas/Error'
  */
-router.delete('/:id', deleteTrendingProduct);
+router.post('/delete/:id', deleteTrendingProduct);
 
 module.exports = router;
