@@ -61,8 +61,6 @@ app.use('/api/carousel', require('./routes/carousel'));
 app.use('/api/explore', require('./routes/explore'));
 app.use('/api/trending', require('./routes/trending'));
 app.use('/api/categories', require('./routes/category'));
-app.use('/api/addresses', require('./routes/address'));
-app.use('/api/orders', require('./routes/order'));
 
 // Serve static files for uploaded images
 app.use('/uploads', express.static('public/uploads'));
@@ -79,21 +77,17 @@ app.get('/health', (req, res) => {
   });
 });
 
-const errorHandler = require('./middleware/errorHandler');
-
 // Handle undefined routes
-app.use('*', (req, res, next) => {
-  const error = new Error('Route not found');
-  error.statusCode = 404;
-  next(error);
+app.use('*', (req, res) => {
+  res.status(404).json({
+    success: false,
+    message: 'Route not found'
+  });
 });
-
-// Error handling middleware
-app.use(errorHandler);
 
 const PORT = process.env.PORT || 3001;
 
-const server = app.listen(PORT, () => {
+app.listen(PORT, () => {
   console.log(`Server running on port ${PORT}`);
   console.log(`Swagger documentation available at http://localhost:${PORT}/api-docs`);
 });
@@ -102,7 +96,7 @@ const server = app.listen(PORT, () => {
 process.on('unhandledRejection', (err, promise) => {
   console.log(`Error: ${err.message}`);
   // Close server & exit process
-  server.close(() => process.exit(1));
+  process.exit(1);
 });
 
 module.exports = app;
