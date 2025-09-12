@@ -157,8 +157,8 @@ router.post('/', upload.single('image'), createCategory);
 
 /**
  * @swagger
- * /api/categories/{id}:
- *   put:
+ * /api/categories/{id}/update:
+ *   post:
  *     summary: Update category
  *     tags: [Categories]
  *     parameters:
@@ -201,12 +201,12 @@ router.post('/', upload.single('image'), createCategory);
  *             schema:
  *               $ref: '#/components/schemas/Error'
  */
-router.put('/:id', upload.single('image'), updateCategory);
+router.post('/:id/update', upload.single('image'), updateCategory);
 
 /**
  * @swagger
- * /api/categories/{id}:
- *   delete:
+ * /api/categories/{id}/delete:
+ *   post:
  *     summary: Delete category
  *     tags: [Categories]
  *     parameters:
@@ -235,6 +235,6 @@ router.put('/:id', upload.single('image'), updateCategory);
  *             schema:
  *               $ref: '#/components/schemas/Error'
  */
-router.delete('/:id', deleteCategory);
+router.post('/:id/delete', deleteCategory);
 
 module.exports = router;
