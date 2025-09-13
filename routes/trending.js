@@ -116,6 +116,7 @@ router.get('/', getTrendingProducts);
  *             required:
  *               - name
  *               - price
+ *               - size
  *               - image
  *             properties:
  *               name:
@@ -127,6 +128,9 @@ router.get('/', getTrendingProducts);
  *               price:
  *                 type: number
  *                 description: Product price
+ *               size:
+ *                 type: string
+ *                 description: Product size
  *               category:
  *                 type: string
  *                 description: Product category
@@ -225,6 +229,9 @@ router.get('/:id', getTrendingProduct);
  *               price:
  *                 type: number
  *                 description: Product price
+ *               size:
+ *                 type: string
+ *                 description: Product size
  *               category:
  *                 type: string
  *                 description: Product category

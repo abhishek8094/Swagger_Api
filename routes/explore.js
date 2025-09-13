@@ -216,7 +216,7 @@ const upload = multer({
 router.get('/', getExploreCollection);
 
 /**
- * @swaggerj
+ * @swagger
  * /api/explore:
  *   post:
  *     summary: Create new product for explore collection with image upload
@@ -303,10 +303,12 @@ router.post('/', upload.single('image'), createExploreProduct);
  */
 router.get('/:id', getExploreProduct);
 
+router.post('/update/:id', upload.single('image'), updateExploreProduct);
+
 /**
  * @swagger
- * /api/explore/{id}:
- *   put:
+ * /api/explore/update/{id}:
+ *   post:
  *     summary: Update explore product
  *     tags: [Explore]
  *     parameters:
@@ -358,12 +360,10 @@ router.get('/:id', getExploreProduct);
  *             schema:
  *               $ref: '#/components/schemas/Error'
  */
-router.put('/:id', upload.single('image'), updateExploreProduct);
-
 /**
  * @swagger
- * /api/explore/{id}:
- *   delete:
+ * /api/explore/delete/{id}:
+ *   post:
  *     summary: Delete explore product
  *     tags: [Explore]
  *     parameters:
@@ -392,6 +392,6 @@ router.put('/:id', upload.single('image'), updateExploreProduct);
  *             schema:
  *               $ref: '#/components/schemas/Error'
  */
-router.delete('/:id', deleteExploreProduct);
+router.post('/delete/:id', deleteExploreProduct);
 
 module.exports = router;
