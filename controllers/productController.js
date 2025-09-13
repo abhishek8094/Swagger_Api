@@ -1,4 +1,3 @@
-
 const Product = require('../models/Product');
 const path = require('path');
 const fs = require('fs');
@@ -10,17 +9,17 @@ exports.getProducts = async (req, res, next) => {
   try {
     const products = await Product.find().sort({ createdAt: -1 });
 
-    // Prefix imageUrl with localhost URL
-    const productsWithFullImageUrl = products.map(product => {
+    // Prefix image with localhost URL
+    const productsWithFullImage = products.map(product => {
       const productObj = product.toObject();
-      productObj.imageUrl = `http://localhost:3001${productObj.imageUrl}`;
+      productObj.image = `http://localhost:3001${productObj.image}`;
       return productObj;
     });
 
     res.status(200).json({
       success: true,
-      count: productsWithFullImageUrl.length,
-      data: productsWithFullImageUrl
+      count: productsWithFullImage.length,
+      data: productsWithFullImage
     });
   } catch (error) {
     error.statusCode = 400;
@@ -41,9 +40,9 @@ exports.getProduct = async (req, res, next) => {
       return next(error);
     }
 
-    // Prefix imageUrl with localhost URL
+    // Prefix image with localhost URL
     const productObj = product.toObject();
-    productObj.imageUrl = `http://localhost:3001${productObj.imageUrl}`;
+    productObj.image = `http://localhost:3001${productObj.image}`;
 
     res.status(200).json({
       success: true,
@@ -62,6 +61,13 @@ exports.createProduct = async (req, res, next) => {
   try {
     const { name, description, price, category, isExplore, size } = req.body;
 
+    // Validate required fields
+    if (!size || !['S', 'M', 'L', 'XL'].includes(size)) {
+      const error = new Error('Please add a valid product size (S, M, L, XL)');
+      error.statusCode = 400;
+      return next(error);
+    }
+
     // Check if file was uploaded
     if (!req.file) {
       const error = new Error('Please upload an image');
@@ -70,7 +76,7 @@ exports.createProduct = async (req, res, next) => {
     }
 
     // Create image URL
-    const imageUrl = `/uploads/${req.file.filename}`;
+    const image = `/uploads/${req.file.filename}`;
 
     const product = await Product.create({
       name,
@@ -78,13 +84,13 @@ exports.createProduct = async (req, res, next) => {
       price: parseFloat(price),
       size,
       category,
-      imageUrl,
+      image,
       isExplore: isExplore || false
     });
 
-    // Prefix imageUrl with localhost URL for response
+    // Prefix image with localhost URL for response
     const productObj = product.toObject();
-    productObj.imageUrl = `http://localhost:3001${productObj.imageUrl}`;
+    productObj.image = `http://localhost:3001${productObj.image}`;
 
     res.status(201).json({
       success: true,
@@ -96,14 +102,19 @@ exports.createProduct = async (req, res, next) => {
   }
 };
 
-
-
 // @desc    Update product
-// @route   PUT /api/products/:id
+// @route   POST /api/products/update/:id
 // @access  Public
 exports.updateProduct = async (req, res, next) => {
   try {
     const { name, description, price, category, size } = req.body;
+
+    // Validate size if provided
+    if (size && !['S', 'M', 'L', 'XL'].includes(size)) {
+      const error = new Error('Please add a valid product size (S, M, L, XL)');
+      error.statusCode = 400;
+      return next(error);
+    }
 
     let updateData = {
       name,
@@ -113,14 +124,14 @@ exports.updateProduct = async (req, res, next) => {
       size
     };
 
-    // If new image uploaded, update image URL
+    // If new image uploaded, update image
     if (req.file) {
-      updateData.imageUrl = `/uploads/${req.file.filename}`;
+      updateData.image = `/uploads/${req.file.filename}`;
 
       // Delete old image file if exists
       const oldProduct = await Product.findById(req.params.id);
-      if (oldProduct && oldProduct.imageUrl) {
-        const oldImagePath = path.join(__dirname, '..', 'public', oldProduct.imageUrl);
+      if (oldProduct && oldProduct.image) {
+        const oldImagePath = path.join(__dirname, '..', 'public', oldProduct.image);
         if (fs.existsSync(oldImagePath)) {
           fs.unlinkSync(oldImagePath);
         }
@@ -142,9 +153,9 @@ exports.updateProduct = async (req, res, next) => {
       return next(error);
     }
 
-    // Prefix imageUrl with localhost URL for response
+    // Prefix image with localhost URL for response
     const productObj = product.toObject();
-    productObj.imageUrl = `http://localhost:3001${productObj.imageUrl}`;
+    productObj.image = `http://localhost:3001${productObj.image}`;
 
     res.status(200).json({
       success: true,
@@ -157,7 +168,7 @@ exports.updateProduct = async (req, res, next) => {
 };
 
 // @desc    Delete product
-// @route   DELETE /api/products/:id
+// @route   POST /api/products/delete/:id
 // @access  Public
 exports.deleteProduct = async (req, res, next) => {
   try {
@@ -170,8 +181,8 @@ exports.deleteProduct = async (req, res, next) => {
     }
 
     // Delete image file
-    if (product.imageUrl) {
-      const imagePath = path.join(__dirname, '..', 'public', product.imageUrl);
+    if (product.image) {
+      const imagePath = path.join(__dirname, '..', 'public', product.image);
       if (fs.existsSync(imagePath)) {
         fs.unlinkSync(imagePath);
       }
@@ -213,23 +224,20 @@ exports.searchProducts = async (req, res, next) => {
 
     const products = await Product.find(query).sort({ createdAt: -1 });
 
-    // Prefix imageUrl with localhost URL
-    const productsWithFullImageUrl = products.map(product => {
+    // Prefix image with localhost URL
+    const productsWithFullImage = products.map(product => {
       const productObj = product.toObject();
-      productObj.imageUrl = `http://localhost:3001${productObj.imageUrl}`;
+      productObj.image = `http://localhost:3001${productObj.image}`;
       return productObj;
     });
 
     res.status(200).json({
       success: true,
-      count: productsWithFullImageUrl.length,
-      data: productsWithFullImageUrl
+      count: productsWithFullImage.length,
+      data: productsWithFullImage
     });
   } catch (error) {
     error.statusCode = 400;
     next(error);
   }
 };
-
-
-

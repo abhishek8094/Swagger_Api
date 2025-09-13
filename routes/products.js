@@ -278,8 +278,8 @@ router.post('/', upload.single('image'), createProduct);
 
 /**
  * @swagger
- * /api/products/{id}:
- *   put:
+ * /api/products/update/{id}:
+ *   post:
  *     summary: Update product
  *     tags: [Products]
  *     parameters:
@@ -334,12 +334,12 @@ router.post('/', upload.single('image'), createProduct);
  *             schema:
  *               $ref: '#/components/schemas/Error'
  */
-router.put('/:id', upload.single('image'), updateProduct);
+router.post('/update/:id', upload.single('image'), updateProduct);
 
 /**
  * @swagger
- * /api/products/{id}:
- *   delete:
+ * /api/products/delete/{id}:
+ *   post:
  *     summary: Delete product
  *     tags: [Products]
  *     parameters:
@@ -368,6 +368,6 @@ router.put('/:id', upload.single('image'), updateProduct);
  *             schema:
  *               $ref: '#/components/schemas/Error'
  */
-router.delete('/:id', deleteProduct);
+router.post('/delete/:id', deleteProduct);
 
 module.exports = router;

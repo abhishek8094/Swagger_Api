@@ -22,7 +22,7 @@ const productSchema = new mongoose.Schema({
     enum: ['S', 'M', 'L', 'XL'],
     required: [true, 'Please add a product size']
   },
-  imageUrl: {
+  image: {
     type: String,
     required: [true, 'Please add an image URL']
   },

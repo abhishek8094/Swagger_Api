@@ -85,25 +85,27 @@ exports.updateAddress = async (req, res, next) => {
   try {
     const { countryRegion, firstName, lastName, address, apartmentSuite, city, state, pinCode, phone, defaultAddress } = req.body;
 
-    if (defaultAddress) {
+    const updateData = {};
+
+    if (countryRegion !== undefined) updateData.countryRegion = countryRegion;
+    if (firstName !== undefined) updateData.firstName = firstName;
+    if (lastName !== undefined) updateData.lastName = lastName;
+    if (address !== undefined) updateData.address = address;
+    if (apartmentSuite !== undefined) updateData.apartmentSuite = apartmentSuite;
+    if (city !== undefined) updateData.city = city;
+    if (state !== undefined) updateData.state = state;
+    if (pinCode !== undefined) updateData.pinCode = pinCode;
+    if (phone !== undefined) updateData.phone = phone;
+    if (defaultAddress !== undefined) updateData.defaultAddress = defaultAddress;
+
+    if (defaultAddress === true) {
       // Unset defaultAddress for all other addresses except this one
       await Address.updateMany({ defaultAddress: true, _id: { $ne: req.params.id } }, { defaultAddress: false });
     }
 
     const updatedAddress = await Address.findOneAndUpdate(
       { _id: req.params.id, user: req.user._id },
-      {
-        countryRegion,
-        firstName,
-        lastName,
-        address,
-        apartmentSuite,
-        city,
-        state,
-        pinCode,
-        phone,
-        defaultAddress
-      },
+      updateData,
       {
         new: true,
         runValidators: true

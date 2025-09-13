@@ -6,6 +6,7 @@ const {
   updateAddress,
   deleteAddress
 } = require('../controllers/addressController');
+const { protect } = require('../middleware/auth');
 
 const router = express.Router();
 
@@ -220,7 +221,7 @@ router.get('/:id', getAddress);
  *             schema:
  *               $ref: '#/components/schemas/Error'
  */
-router.post('/', createAddress);
+router.post('/', protect, createAddress);
 
 /**
  * @swagger
@@ -288,7 +289,7 @@ router.post('/', createAddress);
  *             schema:
  *               $ref: '#/components/schemas/Error'
  */
-router.post('/:id/update', updateAddress);
+router.post('/:id/update', protect, updateAddress);
 
 /**
  * @swagger
@@ -322,6 +323,6 @@ router.post('/:id/update', updateAddress);
  *             schema:
  *               $ref: '#/components/schemas/Error'
  */
-router.post('/:id/delete', deleteAddress);
+router.post('/:id/delete', protect, deleteAddress);
 
 module.exports = router;

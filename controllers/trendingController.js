@@ -62,7 +62,14 @@ exports.getTrendingProduct = async (req, res, next) => {
 // @access  Public
 exports.createTrendingProduct = async (req, res, next) => {
   try {
-    const { name, description, price, category } = req.body;
+    const { name, description, price, category, size } = req.body;
+
+    // Validate required fields
+    if (!size || !['S', 'M', 'L', 'XL'].includes(size)) {
+      const error = new Error('Please add a valid product size (S, M, L, XL)');
+      error.statusCode = 400;
+      return next(error);
+    }
 
     // Check if file was uploaded
     if (!req.files || !req.files.image || req.files.image.length === 0) {
@@ -85,6 +92,7 @@ exports.createTrendingProduct = async (req, res, next) => {
       name,
       description,
       price: parseFloat(price),
+      size,
       category,
       imageUrl,
       subImg: subImgUrl,
@@ -106,13 +114,21 @@ exports.createTrendingProduct = async (req, res, next) => {
 // @access  Public
 exports.updateTrendingProduct = async (req, res, next) => {
   try {
-    const { name, description, price, category } = req.body;
+    const { name, description, price, category, size } = req.body;
+
+    // Validate size if provided
+    if (size && !['S', 'M', 'L', 'XL'].includes(size)) {
+      const error = new Error('Please add a valid product size (S, M, L, XL)');
+      error.statusCode = 400;
+      return next(error);
+    }
 
     let updateData = {
       name,
       description,
       price: parseFloat(price),
-      category
+      category,
+      size
     };
 
     // If new image uploaded, update image URL

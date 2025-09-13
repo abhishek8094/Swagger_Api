@@ -61,6 +61,8 @@ app.use('/api/carousel', require('./routes/carousel'));
 app.use('/api/explore', require('./routes/explore'));
 app.use('/api/trending', require('./routes/trending'));
 app.use('/api/categories', require('./routes/category'));
+app.use('/api/addresses', require('./routes/address'));
+app.use('/api/orders', require('./routes/order'));
 
 // Serve static files for uploaded images
 app.use('/uploads', express.static('public/uploads'));
