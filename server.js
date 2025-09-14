@@ -18,7 +18,10 @@ app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
 // Enable CORS
-app.use(cors());
+app.use(cors({
+  origin: true, 
+  credentials: true 
+}));
 
 // Swagger configuration
 const swaggerOptions = {
@@ -69,6 +72,11 @@ app.use('/uploads', express.static('public/uploads'));
 
 // Swagger route
 app.use('/api-docs', swaggerUi.serve, swaggerUi.setup(swaggerSpec));
+
+// Redirect root to /api-docs
+app.get('/', (req, res) => {
+  res.redirect('/api-docs');
+});
 
 // Health check route
 app.get('/health', (req, res) => {
