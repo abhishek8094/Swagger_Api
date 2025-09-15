@@ -53,8 +53,9 @@ const upload = multer({
  *       required:
  *         - name
  *         - price
- *         - imageUrl
+ *         - image
  *         - category
+ *         - size
  *       properties:
  *         id:
  *           type: string
@@ -68,12 +69,16 @@ const upload = multer({
  *         price:
  *           type: number
  *           description: The product price
- *         imageUrl:
+ *         image:
  *           type: string
  *           description: The URL of the product image
  *         category:
  *           type: string
  *           description: The product category
+ *         size:
+ *           type: string
+ *           enum: [S, M, L, XL]
+ *           description: The product size
  *         createdAt:
  *           type: string
  *           format: date
@@ -83,8 +88,9 @@ const upload = multer({
  *         name: Compression Fit T-Shirt
  *         description: Premium compression fit for optimal performance
  *         price: 39.99
- *         imageUrl: http://localhost:3001/uploads/explore-123456789.jpg
+ *         image: http://localhost:3001/uploads/explore-123456789.jpg
  *         category: "Compression Fit"
+ *         size: "M"
  *         createdAt: 2023-10-01T10:00:00.000Z
  */
 
@@ -231,6 +237,7 @@ router.get('/', getExploreCollection);
  *               - name
  *               - price
  *               - image
+ *               - size
  *             properties:
  *               name:
  *                 type: string
@@ -244,6 +251,10 @@ router.get('/', getExploreCollection);
  *               category:
  *                 type: string
  *                 description: Product category
+ *               size:
+ *                 type: string
+ *                 enum: [S, M, L, XL]
+ *                 description: Product size
  *               image:
  *                 type: string
  *                 format: binary
@@ -337,6 +348,10 @@ router.post('/update/:id', upload.single('image'), updateExploreProduct);
  *               category:
  *                 type: string
  *                 description: Product category
+ *               size:
+ *                 type: string
+ *                 enum: [S, M, L, XL]
+ *                 description: Product size
  *               image:
  *                 type: string
  *                 format: binary

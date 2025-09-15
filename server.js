@@ -1,3 +1,4 @@
+
 const express = require('express');
 const cors = require('cors');
 const dotenv = require('dotenv');
@@ -19,8 +20,8 @@ app.use(express.urlencoded({ extended: true }));
 
 // Enable CORS
 app.use(cors({
-  origin: true, 
-  credentials: true 
+  origin: '*',
+  credentials: true
 }));
 
 // Swagger configuration
@@ -66,6 +67,7 @@ app.use('/api/trending', require('./routes/trending'));
 app.use('/api/categories', require('./routes/category'));
 app.use('/api/addresses', require('./routes/address'));
 app.use('/api/orders', require('./routes/order'));
+app.use('/api/contacts', require('./routes/contact'));
 
 // Serve static files for uploaded images
 app.use('/uploads', express.static('public/uploads'));
