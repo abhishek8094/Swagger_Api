@@ -14,7 +14,7 @@ exports.getCategories = async (req, res, next) => {
       message: 'Categories retrieved successfully',
       data: categories.map(cat => ({
         title: cat.title,
-        image: `http://localhost:3001${cat.imageUrl}`,
+        image: `https://node-vw5f.onrender.com${cat.imageUrl}`,
         id: cat._id
       }))
     });
