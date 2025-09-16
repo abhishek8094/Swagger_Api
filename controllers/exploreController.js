@@ -1,48 +1,22 @@
 const Product = require('../models/Product');
-const Category = require('../models/Category');
 const path = require('path');
 const fs = require('fs');
 
-// @desc    Get explore collection with products grouped by categories
+// @desc    Get explore collection
 // @route   GET /api/explore
 // @access  Public
 exports.getExploreCollection = async (req, res, next) => {
   try {
-    // Fetch dynamic categories
-    const categoryDocs = await Category.find().sort({ createdAt: -1 }).select('title imageUrl');
-    const categoryList = categoryDocs.map(cat => ({
-      title: cat.title,
-      image: `https://node-vw5f.onrender.com${cat.imageUrl}`,
-      id: cat._id
-    }));
+    // Get all explore products
+    const products = await Product.find({ isExplore: true }).sort({ createdAt: -1 }).select('name price image category');
 
-    const categories = ['All', ...categoryDocs.map(cat => cat.title)];
-    const collection = {};
-
-    // Add categories to collection
-    collection.Categories = categoryList;
-
-    // Get all products for "All" category
-    const allProducts = await Product.find({ isExplore: true }).sort({ createdAt: -1 }).select('name price image category');
-    collection.All = allProducts.map(product => ({
+    const collection = products.map(product => ({
       id: product._id,
       title: product.name,
       price: product.price,
       image: `https://node-vw5f.onrender.com${product.image}`,
       category: product.category
     }));
-
-    // Get products for each specific category
-    for (const category of categories.slice(1)) { // Skip 'All'
-      const products = await Product.find({ category, isExplore: true }).sort({ createdAt: -1 }).select('name price image category');
-      collection[category] = products.map(product => ({
-        id: product._id,
-        title: product.name,
-        price: product.price,
-        image: `https://node-vw5f.onrender.com${product.image}`,
-        category: product.category
-      }));
-    }
 
     res.status(200).json({
       success: true,
