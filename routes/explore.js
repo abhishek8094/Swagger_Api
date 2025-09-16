@@ -105,7 +105,7 @@ const upload = multer({
  * @swagger
  * /api/explore:
  *   get:
- *     summary: Get explore collection with products grouped by categories
+ *     summary: Get explore collection
  *     tags: [Explore]
  *     responses:
  *       200:
@@ -120,98 +120,20 @@ const upload = multer({
  *                 message:
  *                   type: string
  *                 data:
- *                   type: object
- *                   properties:
- *                     All:
- *                       type: array
- *                       items:
- *                         type: object
- *                         properties:
- *                           id:
- *                             type: string
- *                           title:
- *                             type: string
- *                           price:
- *                             type: number
- *                           image:
- *                             type: string
- *                           category:
- *                             type: string
- *                     "Compression Fit":
- *                       type: array
- *                       items:
- *                         type: object
- *                         properties:
- *                           id:
- *                             type: string
- *                           title:
- *                             type: string
- *                           price:
- *                             type: number
- *                           image:
- *                             type: string
- *                           category:
- *                             type: string
- *                     "T-Shirts":
- *                       type: array
- *                       items:
- *                         type: object
- *                         properties:
- *                           id:
- *                             type: string
- *                           title:
- *                             type: string
- *                           price:
- *                             type: number
- *                           image:
- *                             type: string
- *                           category:
- *                             type: string
- *                     Joggers:
- *                       type: array
- *                       items:
- *                         type: object
- *                         properties:
- *                           id:
- *                             type: string
- *                           title:
- *                             type: string
- *                           price:
- *                             type: number
- *                           image:
- *                             type: string
- *                           category:
- *                             type: string
- *                     Shorts:
- *                       type: array
- *                       items:
- *                         type: object
- *                         properties:
- *                           id:
- *                             type: string
- *                           title:
- *                             type: string
- *                           price:
- *                             type: number
- *                           image:
- *                             type: string
- *                           category:
- *                             type: string
- *                     Stringers:
- *                       type: array
- *                       items:
- *                         type: object
- *                         properties:
- *                           id:
- *                             type: string
- *                           title:
- *                             type: string
- *                           price:
- *                             type: number
- *                           image:
- *                             type: string
- *                           category:
- *                             type: string
+ *                   type: array
+ *                   items:
+ *                     type: object
+ *                     properties:
+ *                       id:
+ *                         type: string
+ *                       title:
+ *                         type: string
+ *                       price:
+ *                         type: number
+ *                       image:
+ *                         type: string
+ *                       category:
+ *                         type: string
  *       400:
  *         description: Bad request
  *         content:
