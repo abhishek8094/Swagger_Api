@@ -1,4 +1,5 @@
 const Product = require('../models/Product');
+const Category = require('../models/Category');
 const path = require('path');
 const fs = require('fs');
 
@@ -7,8 +8,19 @@ const fs = require('fs');
 // @access  Public
 exports.getExploreCollection = async (req, res, next) => {
   try {
-    const categories = ['All', 'Compression Fit', 'T-Shirts', 'Joggers', 'Shorts', 'Stringers'];
+    // Fetch dynamic categories
+    const categoryDocs = await Category.find().sort({ createdAt: -1 }).select('title imageUrl');
+    const categoryList = categoryDocs.map(cat => ({
+      title: cat.title,
+      image: `https://node-vw5f.onrender.com${cat.imageUrl}`,
+      id: cat._id
+    }));
+
+    const categories = ['All', ...categoryDocs.map(cat => cat.title)];
     const collection = {};
+
+    // Add categories to collection
+    collection.Categories = categoryList;
 
     // Get all products for "All" category
     const allProducts = await Product.find({ isExplore: true }).sort({ createdAt: -1 }).select('name price image category');
@@ -16,7 +28,7 @@ exports.getExploreCollection = async (req, res, next) => {
       id: product._id,
       title: product.name,
       price: product.price,
-      image: `http://localhost:3001${product.image}`,
+      image: `https://node-vw5f.onrender.com${product.image}`,
       category: product.category
     }));
 
@@ -27,7 +39,7 @@ exports.getExploreCollection = async (req, res, next) => {
         id: product._id,
         title: product.name,
         price: product.price,
-        image: `http://localhost:3001${product.image}`,
+        image: `https://node-vw5f.onrender.com${product.image}`,
         category: product.category
       }));
     }
