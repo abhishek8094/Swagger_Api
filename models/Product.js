@@ -24,7 +24,7 @@ const productSchema = new mongoose.Schema({
   },
   image: {
     type: String,
-    required: [true, 'Please add an image URL']
+    required: [true, 'Please add an image ']
   },
   subImg: {
     type: String

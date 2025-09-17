@@ -12,7 +12,7 @@ exports.getProducts = async (req, res, next) => {
     // Prefix image with localhost URL
     const productsWithFullImage = products.map(product => {
       const productObj = product.toObject();
-      productObj.image = `http://localhost:3001${productObj.image}`;
+      productObj.image = `https://node-vw5f.onrender.com${productObj.image}`;
       return productObj;
     });
 
@@ -42,7 +42,7 @@ exports.getProduct = async (req, res, next) => {
 
     // Prefix image with localhost URL
     const productObj = product.toObject();
-    productObj.image = `http://localhost:3001${productObj.image}`;
+    productObj.image = `https://node-vw5f.onrender.com${productObj.image}`;
 
     res.status(200).json({
       success: true,
@@ -90,7 +90,7 @@ exports.createProduct = async (req, res, next) => {
 
     // Prefix image with localhost URL for response
     const productObj = product.toObject();
-    productObj.image = `http://localhost:3001${productObj.image}`;
+    productObj.image = `https://node-vw5f.onrender.com${productObj.image}`;
 
     res.status(201).json({
       success: true,
@@ -155,7 +155,7 @@ exports.updateProduct = async (req, res, next) => {
 
     // Prefix image with localhost URL for response
     const productObj = product.toObject();
-    productObj.image = `http://localhost:3001${productObj.image}`;
+    productObj.image = `https://node-vw5f.onrender.com${productObj.image}`;
 
     res.status(200).json({
       success: true,
@@ -227,7 +227,7 @@ exports.searchProducts = async (req, res, next) => {
     // Prefix image with localhost URL
     const productsWithFullImage = products.map(product => {
       const productObj = product.toObject();
-      productObj.image = `http://localhost:3001${productObj.image}`;
+      productObj.image = `https://node-vw5f.onrender.com${productObj.image}`;
       return productObj;
     });
 
