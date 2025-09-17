@@ -106,8 +106,8 @@ const upload = multer({
  *                         description: The full URL of the carousel image
  *                     example:
  *                       id: "60d5ecb74b24c72b8c8b4567"
- *                       imageUrl: "http://localhost:3000/uploads/image1.jpg"
- *                   example: [{"id": "60d5ecb74b24c72b8c8b4567", "imageUrl": "http://localhost:3000/uploads/image1.jpg"}]
+ *                       imageUrl: "https://node-vw5f.onrender.com/uploads/image1.jpg"
+ *                   example: [{"id": "60d5ecb74b24c72b8c8b4567", "imageUrl": "https://node-vw5f.onrender.com/uploads/image1.jpg"}]
  *       400:
  *         description: Bad request
  *         content:
