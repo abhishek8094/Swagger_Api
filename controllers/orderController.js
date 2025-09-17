@@ -84,7 +84,7 @@ exports.addOrder = async (req, res, next) => {
 
     // Populate the order with product and address details
     await order.populate([
-      { path: 'products.product', select: 'name price images' },
+      { path: 'products.product', select: 'name price image' },
       { path: 'shippingAddress', select: 'countryRegion firstName lastName address apartmentSuite city state pinCode phone' },
       { path: 'user', select: 'firstName lastName email' }
     ]);
@@ -116,7 +116,7 @@ exports.getOrder = async (req, res, next) => {
   try {
     const order = await Order.findById(req.params.id)
       .populate([
-        { path: 'products.product', select: 'name price images description' },
+        { path: 'products.product', select: 'name price image description' },
         { path: 'shippingAddress', select: 'countryRegion firstName lastName address apartmentSuite city state pinCode phone' },
         { path: 'user', select: 'firstName lastName email' }
       ]);
@@ -157,7 +157,7 @@ exports.getUserOrders = async (req, res, next) => {
   try {
     const orders = await Order.find({ user: req.user._id })
       .populate([
-        { path: 'products.product', select: 'name price images' },
+        { path: 'products.product', select: 'name price image' },
         { path: 'shippingAddress', select: 'countryRegion firstName lastName address apartmentSuite city state pinCode phone' }
       ])
       .sort({ createdAt: -1 });
@@ -201,7 +201,7 @@ exports.updateOrderStatus = async (req, res, next) => {
         runValidators: true
       }
     ).populate([
-      { path: 'products.product', select: 'name price images' },
+      { path: 'products.product', select: 'name price image' },
       { path: 'shippingAddress', select: 'countryRegion firstName lastName address apartmentSuite city state pinCode phone' },
       { path: 'user', select: 'firstName lastName email' }
     ]);
