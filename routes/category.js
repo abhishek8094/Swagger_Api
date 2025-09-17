@@ -69,7 +69,7 @@ const upload = multer({
  *       example:
  *         id: d5fE_asz
  *         title: Compression Fit
- *         imageUrl: http://localhost:3001/uploads/category-123456789.jpg
+ *         imageUrl: https://node-vw5f.onrender.com/uploads/category-123456789.jpg
  *         createdAt: 2023-10-01T10:00:00.000Z
  */
 

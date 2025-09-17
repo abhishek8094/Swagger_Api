@@ -39,7 +39,7 @@ const swaggerOptions = {
     },
     servers: [
       {
-        url: `http://localhost:${process.env.PORT || 3001}`,
+        url: `https://node-vw5f.onrender.com`,
         description: 'Development server'
       }
     ],

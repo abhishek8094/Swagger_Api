@@ -88,7 +88,7 @@ const upload = multer({
  *         name: Compression Fit T-Shirt
  *         description: Premium compression fit for optimal performance
  *         price: 39.99
- *         image: http://localhost:3001/uploads/explore-123456789.jpg
+ *         image: https://node-vw5f.onrender.com/uploads/explore-123456789.jpg
  *         category: "Compression Fit"
  *         size: "M"
  *         createdAt: 2023-10-01T10:00:00.000Z
