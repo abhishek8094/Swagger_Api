@@ -53,7 +53,6 @@ const router = express.Router();
  *           description: Shipping address ID
  *         paymentMethod:
  *           type: string
- *           enum: [credit_card, debit_card, paypal, bank_transfer, cash_on_delivery]
  *           description: Payment method used
  *         paymentStatus:
  *           type: string
@@ -109,7 +108,6 @@ const router = express.Router();
  *           description: Shipping address ID
  *         paymentMethod:
  *           type: string
- *           enum: [credit_card, debit_card, paypal, bank_transfer, cash_on_delivery]
  *           description: Payment method
  *       example:
  *         products:
