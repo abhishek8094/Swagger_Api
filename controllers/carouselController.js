@@ -1,6 +1,11 @@
 const Carousel = require('../models/Carousel');
-const path = require('path');
-const fs = require('fs');
+const cloudinary = require('../config/cloudinary');
+
+// Helper function to extract public_id from Cloudinary URL
+const getPublicIdFromUrl = (url) => {
+  const match = url.match(/\/upload\/(?:v\d+\/)?(.+)\.[a-zA-Z]+$/);
+  return match ? match[1] : null;
+};
 
 // @desc    Get all carousel images
 // @route   GET /api/carousel
@@ -12,10 +17,9 @@ const carouselImages = await Carousel.find()
       .limit(10)
       .select('imageUrl');
 
-    const baseUrl = `${req.protocol}://${req.get('host')}`;
     const images = carouselImages.map(item => ({
       id: item._id,
-      imageUrl: `${baseUrl}${item.imageUrl}`
+      imageUrl: item.imageUrl
     }));
 
     res.status(200).json({
@@ -41,8 +45,19 @@ exports.addCarouselImage = async (req, res, next) => {
       return next(error);
     }
 
-    // Create image URL
-    const imageUrl = `/uploads/${req.file.filename}`;
+    // Upload to Cloudinary
+    const result = await new Promise((resolve, reject) => {
+      const uploadStream = cloudinary.uploader.upload_stream(
+        { folder: 'carousel' },
+        (error, result) => {
+          if (error) reject(error);
+          else resolve(result);
+        }
+      );
+      uploadStream.end(req.file.buffer);
+    });
+
+    const imageUrl = result.secure_url;
 
     // Save to Carousel collection
     const carouselImage = await Carousel.create({
@@ -78,13 +93,25 @@ exports.updateCarouselImage = async (req, res, next) => {
 
     // If new image uploaded, update image URL
     if (req.file) {
-      const newImageUrl = `/uploads/${req.file.filename}`;
+      // Upload new to Cloudinary
+      const result = await new Promise((resolve, reject) => {
+        const uploadStream = cloudinary.uploader.upload_stream(
+          { folder: 'carousel' },
+          (error, result) => {
+            if (error) reject(error);
+            else resolve(result);
+          }
+        );
+        uploadStream.end(req.file.buffer);
+      });
 
-      // Delete old image file
+      const newImageUrl = result.secure_url;
+
+      // Delete old from Cloudinary
       if (carouselImage.imageUrl) {
-        const oldImagePath = path.join(__dirname, '..', 'public', carouselImage.imageUrl);
-        if (fs.existsSync(oldImagePath)) {
-          fs.unlinkSync(oldImagePath);
+        const oldPublicId = getPublicIdFromUrl(carouselImage.imageUrl);
+        if (oldPublicId) {
+          await cloudinary.uploader.destroy(oldPublicId);
         }
       }
 
@@ -119,11 +146,11 @@ exports.deleteCarouselImage = async (req, res, next) => {
       return next(error);
     }
 
-    // Delete image file
+    // Delete image from Cloudinary
     if (carouselImage.imageUrl) {
-      const imagePath = path.join(__dirname, '..', 'public', carouselImage.imageUrl);
-      if (fs.existsSync(imagePath)) {
-        fs.unlinkSync(imagePath);
+      const publicId = getPublicIdFromUrl(carouselImage.imageUrl);
+      if (publicId) {
+        await cloudinary.uploader.destroy(publicId);
       }
     }
 

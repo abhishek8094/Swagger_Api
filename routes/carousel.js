@@ -1,6 +1,5 @@
 const express = require('express');
 const multer = require('multer');
-const path = require('path');
 const {
   getCarouselImages,
   addCarouselImage,
@@ -10,21 +9,8 @@ const {
 
 const router = express.Router();
 
-// Configure multer for file uploads
-const storage = multer.diskStorage({
-  destination: (req, file, cb) => {
-    const uploadPath = path.join(__dirname, '../public/uploads');
-    const fs = require('fs');
-    if (!fs.existsSync(uploadPath)) {
-      fs.mkdirSync(uploadPath, { recursive: true });
-    }
-    cb(null, uploadPath);
-  },
-  filename: (req, file, cb) => {
-    const uniqueSuffix = Date.now() + '-' + Math.round(Math.random() * 1E9);
-    cb(null, file.fieldname + '-' + uniqueSuffix + path.extname(file.originalname));
-  }
-});
+// Configure multer for file uploads (memory storage for Cloudinary)
+const storage = multer.memoryStorage();
 
 // File filter for images only
 const fileFilter = (req, file, cb) => {
@@ -123,6 +109,10 @@ router.get('/', getCarouselImages);
  *   post:
  *     summary: Upload a new carousel image
  *     tags: [Carousel]
+ *     description: |
+ *       Uploads a new carousel image file. The image is uploaded to Cloudinary under the 'carousel' folder.
+ *       The response returns the secure URL of the uploaded image from Cloudinary, which can be used to display the image.
+ *       You can verify the uploaded image in your Cloudinary dashboard under the 'carousel' folder.
  *     requestBody:
  *       required: true
  *       content:
@@ -136,36 +126,36 @@ router.get('/', getCarouselImages);
  *                 type: string
  *                 format: binary
  *                 description: Carousel image file
- *     responses:
- *       201:
- *         description: Carousel image uploaded successfully
- *         content:
- *           application/json:
- *             schema:
- *               type: object
- *               properties:
- *                 success:
- *                   type: boolean
- *                 message:
- *                   type: string
- *                 data:
- *                   type: object
- *                   properties:
- *                     id:
- *                       type: string
- *                       description: The unique ID of the uploaded carousel image
- *                     imageUrl:
- *                       type: string
- *                       description: URL of the uploaded image
- *                   example:
- *                     id: "60d5ecb74b24c72b8c8b4567"
- *                     imageUrl: "/uploads/image1.jpg"
- *       400:
- *         description: Bad request
- *         content:
- *           application/json:
- *             schema:
- *               $ref: '#/components/schemas/Error'
+ *       responses:
+ *         201:
+ *           description: Carousel image uploaded successfully
+ *           content:
+ *             application/json:
+ *               schema:
+ *                 type: object
+ *                 properties:
+ *                   success:
+ *                     type: boolean
+ *                   message:
+ *                     type: string
+ *                   data:
+ *                     type: object
+ *                     properties:
+ *                       id:
+ *                         type: string
+ *                         description: The unique ID of the uploaded carousel image
+ *                       imageUrl:
+ *                         type: string
+ *                         description: URL of the uploaded image
+ *                     example:
+ *                       id: "60d5ecb74b24c72b8c8b4567"
+ *                       imageUrl: "/uploads/image1.jpg"
+ *         400:
+ *           description: Bad request
+ *           content:
+ *             application/json:
+ *               schema:
+ *                 $ref: '#/components/schemas/Error'
  */
 router.post('/', upload.single('image'), addCarouselImage);
 
