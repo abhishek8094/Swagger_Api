@@ -1,6 +1,13 @@
 const Product = require('../models/Product');
 const path = require('path');
 const fs = require('fs');
+const cloudinary = require('../config/cloudinary');
+
+// Helper function to extract public_id from Cloudinary URL
+const getPublicIdFromUrl = (url) => {
+  const match = url.match(/\/upload\/(?:v\d+\/)?(.+)\.[a-zA-Z]+$/);
+  return match ? match[1] : null;
+};
 
 // @desc    Get all products for carousel
 // @route   GET /api/products
@@ -9,12 +16,8 @@ exports.getProducts = async (req, res, next) => {
   try {
     const products = await Product.find().sort({ createdAt: -1 });
 
-    // Prefix image with localhost URL
-    const productsWithFullImage = products.map(product => {
-      const productObj = product.toObject();
-      productObj.image = `https://node-vw5f.onrender.com${productObj.image}`;
-      return productObj;
-    });
+    // Images are already full Cloudinary URLs
+    const productsWithFullImage = products.map(product => product.toObject());
 
     res.status(200).json({
       success: true,
@@ -40,9 +43,8 @@ exports.getProduct = async (req, res, next) => {
       return next(error);
     }
 
-    // Prefix image with localhost URL
+    // Images are already full Cloudinary URLs
     const productObj = product.toObject();
-    productObj.image = `https://node-vw5f.onrender.com${productObj.image}`;
 
     res.status(200).json({
       success: true,
@@ -75,8 +77,19 @@ exports.createProduct = async (req, res, next) => {
       return next(error);
     }
 
-    // Create image URL
-    const image = `/uploads/${req.file.filename}`;
+    // Upload image to Cloudinary
+    const imageResult = await new Promise((resolve, reject) => {
+      const uploadStream = cloudinary.uploader.upload_stream(
+        { folder: 'products' },
+        (error, result) => {
+          if (error) reject(error);
+          else resolve(result);
+        }
+      );
+      uploadStream.end(req.file.buffer);
+    });
+
+    const imageUrl = imageResult.secure_url;
 
     const product = await Product.create({
       name,
@@ -84,13 +97,12 @@ exports.createProduct = async (req, res, next) => {
       price: parseFloat(price),
       size,
       category,
-      image,
+      image: imageUrl,
       isExplore: isExplore || false
     });
 
-    // Prefix image with localhost URL for response
+    // Images are already full Cloudinary URLs
     const productObj = product.toObject();
-    productObj.image = `https://node-vw5f.onrender.com${productObj.image}`;
 
     res.status(201).json({
       success: true,
@@ -126,16 +138,30 @@ exports.updateProduct = async (req, res, next) => {
 
     // If new image uploaded, update image
     if (req.file) {
-      updateData.image = `/uploads/${req.file.filename}`;
+      // Upload new image to Cloudinary
+      const imageResult = await new Promise((resolve, reject) => {
+        const uploadStream = cloudinary.uploader.upload_stream(
+          { folder: 'products' },
+          (error, result) => {
+            if (error) reject(error);
+            else resolve(result);
+          }
+        );
+        uploadStream.end(req.file.buffer);
+      });
 
-      // Delete old image file if exists
+      const newImageUrl = imageResult.secure_url;
+
+      // Delete old image from Cloudinary
       const oldProduct = await Product.findById(req.params.id);
       if (oldProduct && oldProduct.image) {
-        const oldImagePath = path.join(__dirname, '..', 'public', oldProduct.image);
-        if (fs.existsSync(oldImagePath)) {
-          fs.unlinkSync(oldImagePath);
+        const oldPublicId = getPublicIdFromUrl(oldProduct.image);
+        if (oldPublicId) {
+          await cloudinary.uploader.destroy(oldPublicId);
         }
       }
+
+      updateData.image = newImageUrl;
     }
 
     const product = await Product.findByIdAndUpdate(
@@ -153,9 +179,8 @@ exports.updateProduct = async (req, res, next) => {
       return next(error);
     }
 
-    // Prefix image with localhost URL for response
+    // Images are already full Cloudinary URLs
     const productObj = product.toObject();
-    productObj.image = `https://node-vw5f.onrender.com${productObj.image}`;
 
     res.status(200).json({
       success: true,
@@ -180,11 +205,11 @@ exports.deleteProduct = async (req, res, next) => {
       return next(error);
     }
 
-    // Delete image file
+    // Delete image from Cloudinary
     if (product.image) {
-      const imagePath = path.join(__dirname, '..', 'public', product.image);
-      if (fs.existsSync(imagePath)) {
-        fs.unlinkSync(imagePath);
+      const publicId = getPublicIdFromUrl(product.image);
+      if (publicId) {
+        await cloudinary.uploader.destroy(publicId);
       }
     }
 
@@ -224,12 +249,8 @@ exports.searchProducts = async (req, res, next) => {
 
     const products = await Product.find(query).sort({ createdAt: -1 });
 
-    // Prefix image with localhost URL
-    const productsWithFullImage = products.map(product => {
-      const productObj = product.toObject();
-      productObj.image = `https://node-vw5f.onrender.com${productObj.image}`;
-      return productObj;
-    });
+    // Images are already full Cloudinary URLs
+    const productsWithFullImage = products.map(product => product.toObject());
 
     res.status(200).json({
       success: true,

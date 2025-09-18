@@ -1,6 +1,13 @@
 const Product = require('../models/Product');
 const path = require('path');
 const fs = require('fs');
+const cloudinary = require('../config/cloudinary');
+
+// Helper function to extract public_id from Cloudinary URL
+const getPublicIdFromUrl = (url) => {
+  const match = url.match(/\/upload\/(?:v\d+\/)?(.+)\.[a-zA-Z]+$/);
+  return match ? match[1] : null;
+};
 
 // @desc    Get explore collection
 // @route   GET /api/explore
@@ -28,7 +35,7 @@ exports.getExploreCollection = async (req, res, next) => {
           id: product._id,
           title: product.name,
           price: product.price,
-          image: `https://node-vw5f.onrender.com${product.image}`,
+          image: product.image,
           category: product.category
         });
       }
@@ -82,8 +89,19 @@ exports.createExploreProduct = async (req, res, next) => {
       return next(error);
     }
 
-    // Create image URL
-    const image = `/uploads/${req.file.filename}`;
+    // Upload to Cloudinary
+    const result = await new Promise((resolve, reject) => {
+      const uploadStream = cloudinary.uploader.upload_stream(
+        { folder: 'explore' },
+        (error, result) => {
+          if (error) reject(error);
+          else resolve(result);
+        }
+      );
+      uploadStream.end(req.file.buffer);
+    });
+
+    const image = result.secure_url;
 
     const product = await Product.create({
       name,
@@ -97,7 +115,16 @@ exports.createExploreProduct = async (req, res, next) => {
 
     res.status(201).json({
       success: true,
-      data: product
+      message: 'Explore product created successfully',
+      data: {
+        id: product._id,
+        name: product.name,
+        description: product.description,
+        price: product.price,
+        category: product.category,
+        size: product.size,
+        image: image
+      }
     });
   } catch (error) {
     error.statusCode = 400;
@@ -110,6 +137,14 @@ exports.createExploreProduct = async (req, res, next) => {
 // @access  Public
 exports.updateExploreProduct = async (req, res, next) => {
   try {
+    const product = await Product.findById(req.params.id);
+
+    if (!product || !product.isExplore) {
+      const error = new Error('Explore product not found');
+      error.statusCode = 404;
+      return next(error);
+    }
+
     const { name, description, price, category, size } = req.body;
 
     let updateData = {
@@ -120,21 +155,33 @@ exports.updateExploreProduct = async (req, res, next) => {
       size
     };
 
-    // If new image uploaded, update image URL
     if (req.file) {
-      updateData.image = `/uploads/${req.file.filename}`;
+      // Upload new to Cloudinary
+      const result = await new Promise((resolve, reject) => {
+        const uploadStream = cloudinary.uploader.upload_stream(
+          { folder: 'explore' },
+          (error, result) => {
+            if (error) reject(error);
+            else resolve(result);
+          }
+        );
+        uploadStream.end(req.file.buffer);
+      });
 
-      // Delete old image file if exists
-      const oldProduct = await Product.findById(req.params.id);
-      if (oldProduct && oldProduct.image) {
-        const oldImagePath = path.join(__dirname, '..', 'public', oldProduct.image);
-        if (fs.existsSync(oldImagePath)) {
-          fs.unlinkSync(oldImagePath);
+      const newImage = result.secure_url;
+
+      // Delete old from Cloudinary
+      if (product.image) {
+        const oldPublicId = getPublicIdFromUrl(product.image);
+        if (oldPublicId) {
+          await cloudinary.uploader.destroy(oldPublicId);
         }
       }
+
+      updateData.image = newImage;
     }
 
-    const product = await Product.findByIdAndUpdate(
+    const updatedProduct = await Product.findByIdAndUpdate(
       req.params.id,
       updateData,
       {
@@ -143,15 +190,18 @@ exports.updateExploreProduct = async (req, res, next) => {
       }
     );
 
-    if (!product || !product.isExplore) {
-      const error = new Error('Explore product not found');
-      error.statusCode = 404;
-      return next(error);
-    }
-
     res.status(200).json({
       success: true,
-      data: product
+      message: 'Explore product updated successfully',
+      data: {
+        id: updatedProduct._id,
+        name: updatedProduct.name,
+        description: updatedProduct.description,
+        price: updatedProduct.price,
+        category: updatedProduct.category,
+        size: updatedProduct.size,
+        image: updatedProduct.image
+      }
     });
   } catch (error) {
     error.statusCode = 400;
@@ -172,11 +222,11 @@ exports.deleteExploreProduct = async (req, res, next) => {
       return next(error);
     }
 
-    // Delete image file
+    // Delete image from Cloudinary
     if (product.image) {
-      const imagePath = path.join(__dirname, '..', 'public', product.image);
-      if (fs.existsSync(imagePath)) {
-        fs.unlinkSync(imagePath);
+      const publicId = getPublicIdFromUrl(product.image);
+      if (publicId) {
+        await cloudinary.uploader.destroy(publicId);
       }
     }
 
@@ -189,5 +239,4 @@ exports.deleteExploreProduct = async (req, res, next) => {
   } catch (error) {
     error.statusCode = 400;
     next(error);
-  }
-};
+  }}
