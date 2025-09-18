@@ -78,6 +78,22 @@ const upload = multer({
  *                       category:
  *                         type: string
  *                         description: Product category
+ *             example:
+ *               success: true
+ *               message: "Trending products retrieved successfully"
+ *               data:
+ *                 - title: "Compression T-Shirt"
+ *                   description: "Premium compression fit for optimal performance"
+ *                   price: 29.99
+ *                   image: "https://res.cloudinary.com/your-cloud-name/image/upload/v123456789/trending/tshirt-123.jpg"
+ *                   subImg: "https://res.cloudinary.com/your-cloud-name/image/upload/v123456789/trending/sub-tshirt-123.jpg"
+ *                   category: "T-Shirts"
+ *                 - title: "Slim Fit Joggers"
+ *                   description: "Comfortable and stylish joggers"
+ *                   price: 49.99
+ *                   image: "https://res.cloudinary.com/your-cloud-name/image/upload/v123456789/trending/joggers-456.jpg"
+ *                   subImg: null
+ *                   category: "Joggers"
  *       400:
  *         description: Bad request
  *         content:
