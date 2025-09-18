@@ -105,11 +105,11 @@ const upload = multer({
  * @swagger
  * /api/explore:
  *   get:
- *     summary: Get explore collection
+ *     summary: Get explore collection grouped by category
  *     tags: [Explore]
  *     responses:
  *       200:
- *         description: Explore collection retrieved successfully
+ *         description: Explore collection retrieved successfully, grouped by category
  *         content:
  *           application/json:
  *             schema:
@@ -120,20 +120,41 @@ const upload = multer({
  *                 message:
  *                   type: string
  *                 data:
- *                   type: array
- *                   items:
- *                     type: object
- *                     properties:
- *                       id:
- *                         type: string
- *                       title:
- *                         type: string
- *                       price:
- *                         type: number
- *                       image:
- *                         type: string
- *                       category:
- *                         type: string
+ *                   type: object
+ *                   additionalProperties:
+ *                     type: array
+ *                     items:
+ *                       type: object
+ *                       properties:
+ *                         id:
+ *                           type: string
+ *                         title:
+ *                           type: string
+ *                         price:
+ *                           type: number
+ *                         image:
+ *                           type: string
+ *                         category:
+ *                           type: string
+ *             example:
+ *               success: true
+ *               message: "Discover premium fitness wear for every workout"
+ *               data:
+ *                 "Compression Fit": []
+ *                 "T-Shirts":
+ *                   - id: "60d5ecb74b24c72b8c8b4567"
+ *                     title: "Compression T-Shirt"
+ *                     price: 29.99
+ *                     image: "https://node-vw5f.onrender.com/uploads/tshirt-123.jpg"
+ *                     category: "T-Shirts"
+ *                 "Joggers":
+ *                   - id: "60d5ecb74b24c72b8c8b4568"
+ *                     title: "Slim Fit Joggers"
+ *                     price: 49.99
+ *                     image: "https://node-vw5f.onrender.com/uploads/joggers-456.jpg"
+ *                     category: "Joggers"
+ *                 "Shorts": []
+ *                 "Stringers": []
  *       400:
  *         description: Bad request
  *         content:
