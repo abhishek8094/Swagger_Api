@@ -7,21 +7,37 @@ const fs = require('fs');
 // @access  Public
 exports.getExploreCollection = async (req, res, next) => {
   try {
-    // Get all explore products
-    const products = await Product.find({ isExplore: true }).sort({ createdAt: -1 }).select('name price image category');
+    // Build query
+    let query = { isExplore: true };
 
-    const collection = products.map(product => ({
-      id: product._id,
-      title: product.name,
-      price: product.price,
-      image: `https://node-vw5f.onrender.com${product.image}`,
-      category: product.category
-    }));
+    // Get explore products
+    const products = await Product.find(query).sort({ createdAt: -1 }).select('name price image category');
+
+    // Initialize groupedProducts with all possible categories
+    const allCategories = ['Compression Fit', 'T-Shirts', 'Joggers', 'Shorts', 'Stringers'];
+    const groupedProducts = allCategories.reduce((acc, category) => {
+      acc[category] = [];
+      return acc;
+    }, {});
+
+    // Group products by category
+    products.forEach(product => {
+      const category = product.category;
+      if (groupedProducts[category]) {
+        groupedProducts[category].push({
+          id: product._id,
+          title: product.name,
+          price: product.price,
+          image: `https://node-vw5f.onrender.com${product.image}`,
+          category: product.category
+        });
+      }
+    });
 
     res.status(200).json({
       success: true,
       message: 'Discover premium fitness wear for every workout',
-      data: collection
+      data: groupedProducts
     });
   } catch (error) {
     error.statusCode = 400;
