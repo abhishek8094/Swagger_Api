@@ -34,6 +34,9 @@ exports.addOrder = async (req, res, next) => {
       return next(error);
     }
 
+    // Ensure paymentMethod is a string
+    paymentMethod = String(paymentMethod).trim();
+
     // Validate shipping address exists
     const address = await Address.findById(shippingAddress);
 

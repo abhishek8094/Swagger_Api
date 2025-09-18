@@ -5,6 +5,7 @@ const dotenv = require('dotenv');
 const swaggerJsdoc = require('swagger-jsdoc');
 const swaggerUi = require('swagger-ui-express');
 const connectDB = require('./config/database');
+const errorHandler = require('./middleware/errorHandler');
 
 // Load env vars
 dotenv.config();
@@ -96,6 +97,9 @@ app.use('*', (req, res) => {
     message: 'Route not found'
   });
 });
+
+// Error handling middleware
+app.use(errorHandler);
 
 const PORT = process.env.PORT || 3001;
 
