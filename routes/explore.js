@@ -11,21 +11,7 @@ const {
 
 const router = express.Router();
 
-// Configure multer for file uploads
-const storage = multer.diskStorage({
-  destination: (req, file, cb) => {
-    const uploadPath = path.join(__dirname, '../public/uploads');
-    const fs = require('fs');
-    if (!fs.existsSync(uploadPath)) {
-      fs.mkdirSync(uploadPath, { recursive: true });
-    }
-    cb(null, uploadPath);
-  },
-  filename: (req, file, cb) => {
-    const uniqueSuffix = Date.now() + '-' + Math.round(Math.random() * 1E9);
-    cb(null, file.fieldname + '-' + uniqueSuffix + path.extname(file.originalname));
-  }
-});
+const storage = multer.memoryStorage();
 
 // File filter for images only
 const fileFilter = (req, file, cb) => {
@@ -88,7 +74,7 @@ const upload = multer({
  *         name: Compression Fit T-Shirt
  *         description: Premium compression fit for optimal performance
  *         price: 39.99
- *         image: https://node-vw5f.onrender.com/uploads/explore-123456789.jpg
+ *         image: https://res.cloudinary.com/your-cloud-name/image/upload/v123456789/explore/explore-123456789.jpg
  *         category: "Compression Fit"
  *         size: "M"
  *         createdAt: 2023-10-01T10:00:00.000Z
@@ -145,13 +131,13 @@ const upload = multer({
  *                   - id: "60d5ecb74b24c72b8c8b4567"
  *                     title: "Compression T-Shirt"
  *                     price: 29.99
- *                     image: "https://node-vw5f.onrender.com/uploads/tshirt-123.jpg"
+ *                     image: "https://res.cloudinary.com/your-cloud-name/image/upload/v123456789/products/tshirt-123.jpg"
  *                     category: "T-Shirts"
  *                 "Joggers":
  *                   - id: "60d5ecb74b24c72b8c8b4568"
  *                     title: "Slim Fit Joggers"
  *                     price: 49.99
- *                     image: "https://node-vw5f.onrender.com/uploads/joggers-456.jpg"
+ *                     image: "https://res.cloudinary.com/your-cloud-name/image/upload/v123456789/products/joggers-456.jpg"
  *                     category: "Joggers"
  *                 "Shorts": []
  *                 "Stringers": []
