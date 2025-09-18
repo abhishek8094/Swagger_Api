@@ -35,7 +35,7 @@ exports.addOrder = async (req, res, next) => {
     }
 
     // Ensure paymentMethod is a string
-    paymentMethod = String(paymentMethod).trim();
+    const trimmedPaymentMethod = String(paymentMethod).trim();
 
     // Validate shipping address exists
     const address = await Address.findById(shippingAddress);
@@ -82,7 +82,7 @@ exports.addOrder = async (req, res, next) => {
       products: validatedProducts,
       totalAmount,
       shippingAddress,
-      paymentMethod
+      paymentMethod: trimmedPaymentMethod
     });
 
     // Populate the order with product and address details
