@@ -17,15 +17,14 @@ exports.getTrendingProducts = async (req, res, next) => {
     const products = await Product.find()
       .sort({ createdAt: -1 })
       .limit(10)
-      .select('_id name description price imageUrl subImg category');
+      .select('_id name description price image subImg category');
 
-    const baseUrl = `${req.protocol}://${req.get('host')}`;
     const trendingProducts = products.map(product => ({
       id: product._id,
       title: product.name,
       description: product.description,
       price: product.price,
-      image: product.imageUrl,
+      image: product.image,
       subImg: product.subImg,
       category: product.category
     }));
@@ -121,7 +120,7 @@ exports.createTrendingProduct = async (req, res, next) => {
       price: parseFloat(price),
       size,
       category,
-      imageUrl,
+      image: imageUrl,
       subImg: subImgUrl,
       isTrending: true
     });
@@ -176,14 +175,14 @@ exports.updateTrendingProduct = async (req, res, next) => {
 
       // Delete old image from Cloudinary
       const oldProduct = await Product.findById(req.params.id);
-      if (oldProduct && oldProduct.imageUrl) {
-        const oldPublicId = getPublicIdFromUrl(oldProduct.imageUrl);
+      if (oldProduct && oldProduct.image) {
+        const oldPublicId = getPublicIdFromUrl(oldProduct.image);
         if (oldPublicId) {
           await cloudinary.uploader.destroy(oldPublicId);
         }
       }
 
-      updateData.imageUrl = newImageUrl;
+      updateData.image = newImageUrl;
     }
 
     // If new subImg uploaded, update subImg URL
@@ -253,8 +252,8 @@ exports.deleteTrendingProduct = async (req, res, next) => {
     }
 
     // Delete image from Cloudinary
-    if (product.imageUrl) {
-      const publicId = getPublicIdFromUrl(product.imageUrl);
+    if (product.image) {
+      const publicId = getPublicIdFromUrl(product.image);
       if (publicId) {
         await cloudinary.uploader.destroy(publicId);
       }
