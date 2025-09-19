@@ -9,11 +9,27 @@ const crypto = require('crypto');
 // @access  Private
 exports.addOrder = async (req, res, next) => {
   try {
-    const { products, shippingAddress, paymentMethod } = req.body;
+    const { orderId, products, shippingAddress, paymentMethod } = req.body;
 
     logger.info(`Add order request by user ${req.user._id}`);
 
     // Validate required fields
+    if (!orderId) {
+      const error = new Error('Please provide orderId');
+      error.statusCode = 400;
+      logger.warn('OrderId missing');
+      return next(error);
+    }
+
+    // Check if orderId already exists
+    const existingOrder = await Order.findOne({ orderId });
+    if (existingOrder) {
+      const error = new Error('OrderId already exists');
+      error.statusCode = 400;
+      logger.warn(`OrderId already exists: ${orderId}`);
+      return next(error);
+    }
+
     if (!products || !Array.isArray(products) || products.length === 0) {
       const error = new Error('Please provide products array');
       error.statusCode = 400;
@@ -77,9 +93,6 @@ exports.addOrder = async (req, res, next) => {
       totalAmount += product.price * item.quantity;
     }
 
-    // Generate unique orderId
-    const orderId = crypto.randomUUID();
-
     // Create order
     const order = await Order.create({
       orderId,
@@ -99,9 +112,13 @@ exports.addOrder = async (req, res, next) => {
 
     logger.info(`Order created successfully: ${order._id}`);
 
+    // Exclude orderId from the response
+    const responseOrder = order.toObject();
+    delete responseOrder.orderId;
+
     res.status(201).json({
       success: true,
-      data: order
+      data: responseOrder
     });
   } catch (error) {
     logger.error('Error creating order', error);
