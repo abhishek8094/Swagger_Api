@@ -88,10 +88,14 @@ const router = express.Router();
  *     OrderInput:
  *       type: object
  *       required:
+ *         - orderId
  *         - products
  *         - shippingAddress
  *         - paymentMethod
  *       properties:
+ *         orderId:
+ *           type: string
+ *           description: Unique order identifier
  *         products:
  *           type: array
  *           items:
@@ -114,11 +118,75 @@ const router = express.Router();
  *           type: string
  *           description: Payment method
  *       example:
+ *         orderId: 550e8400-e29b-41d4-a716-446655440000
  *         products:
  *           - product: 60d5ecb74b24c72b8c8b4569
  *             quantity: 2
  *         shippingAddress: 60d5ecb74b24c72b8c8b4570
  *         paymentMethod: credit_card
+ *
+ *     OrderResponse:
+ *       type: object
+ *       properties:
+ *         id:
+ *           type: string
+ *           description: The auto-generated id of the order
+ *         user:
+ *           type: string
+ *           description: The user ID who placed the order
+ *         products:
+ *           type: array
+ *           items:
+ *             type: object
+ *             properties:
+ *               product:
+ *                 type: string
+ *                 description: Product ID
+ *               quantity:
+ *                 type: integer
+ *                 description: Quantity of the product
+ *               price:
+ *                 type: number
+ *                 description: Price per unit at the time of order
+ *         totalAmount:
+ *           type: number
+ *           description: Total amount of the order
+ *         status:
+ *           type: string
+ *           enum: [pending, processing, shipped, delivered, cancelled]
+ *           description: Current status of the order
+ *         shippingAddress:
+ *           type: string
+ *           description: Shipping address ID
+ *         paymentMethod:
+ *           type: string
+ *           description: Payment method used
+ *         paymentStatus:
+ *           type: string
+ *           enum: [pending, paid, failed, refunded]
+ *           description: Payment status
+ *         createdAt:
+ *           type: string
+ *           format: date
+ *           description: The date the order was created
+ *         updatedAt:
+ *           type: string
+ *           format: date
+ *           description: The date the order was updated
+ *       example:
+ *         id: 60d5ecb74b24c72b8c8b4567
+ *         user: 60d5ecb74b24c72b8c8b4568
+ *         products:
+ *           - product: 60d5ecb74b24c72b8c8b4569
+ *             quantity: 2
+ *             price: 29.99
+ *         totalAmount: 59.98
+ *         status: pending
+ *         shippingAddress: 60d5ecb74b24c72b8c8b4570
+ *         paymentMethod: credit_card
+ *         paymentStatus: pending
+ *         createdAt: 2023-10-01T10:00:00.000Z
+ *         updatedAt: 2023-10-01T10:00:00.000Z
  *
  *     Error:
  *       type: object
@@ -161,7 +229,7 @@ const router = express.Router();
  *                 success:
  *                   type: boolean
  *                 data:
- *                   $ref: '#/components/schemas/Order'
+ *                   $ref: '#/components/schemas/OrderResponse'
  *       400:
  *         description: Bad request
  *         content:
