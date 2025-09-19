@@ -2,6 +2,7 @@ const Order = require('../models/Order');
 const Product = require('../models/Product');
 const Address = require('../models/Address');
 const logger = require('../utils/logger');
+const crypto = require('crypto');
 
 // @desc    Add a new order
 // @route   POST /api/orders/add
@@ -76,8 +77,12 @@ exports.addOrder = async (req, res, next) => {
       totalAmount += product.price * item.quantity;
     }
 
+    // Generate unique orderId
+    const orderId = crypto.randomUUID();
+
     // Create order
     const order = await Order.create({
+      orderId,
       user: req.user._id,
       products: validatedProducts,
       totalAmount,
@@ -112,12 +117,12 @@ exports.addOrder = async (req, res, next) => {
   }
 };
 
-// @desc    Get order by ID
+// @desc    Get order by orderId
 // @route   GET /api/orders/:id
 // @access  Private
 exports.getOrder = async (req, res, next) => {
   try {
-    const order = await Order.findById(req.params.id)
+    const order = await Order.findOne({ orderId: req.params.id })
       .populate([
         { path: 'products.product', select: 'name price image description' },
         { path: 'shippingAddress', select: 'countryRegion firstName lastName address apartmentSuite city state pinCode phone' },
@@ -142,14 +147,9 @@ exports.getOrder = async (req, res, next) => {
       data: order
     });
   } catch (error) {
-    if (error.name === 'CastError') {
-      const err = new Error('Invalid order ID');
-      err.statusCode = 400;
-      return next(err);
-    }
-
-    error.statusCode = 400;
-    next(error);
+    const err = new Error('Invalid order ID');
+    err.statusCode = 400;
+    return next(err);
   }
 };
 
@@ -196,8 +196,8 @@ exports.updateOrderStatus = async (req, res, next) => {
       return next(error);
     }
 
-    const order = await Order.findByIdAndUpdate(
-      req.params.id,
+    const order = await Order.findOneAndUpdate(
+      { orderId: req.params.id },
       { status },
       {
         new: true,

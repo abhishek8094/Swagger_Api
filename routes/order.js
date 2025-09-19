@@ -24,6 +24,9 @@ const router = express.Router();
  *         id:
  *           type: string
  *           description: The auto-generated id of the order
+ *         orderId:
+ *           type: string
+ *           description: The unique order identifier
  *         user:
  *           type: string
  *           description: The user ID who placed the order
@@ -68,6 +71,7 @@ const router = express.Router();
  *           description: The date the order was updated
  *       example:
  *         id: 60d5ecb74b24c72b8c8b4567
+ *         orderId: 550e8400-e29b-41d4-a716-446655440000
  *         user: 60d5ecb74b24c72b8c8b4568
  *         products:
  *           - product: 60d5ecb74b24c72b8c8b4569
