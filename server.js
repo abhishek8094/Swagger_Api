@@ -62,6 +62,8 @@ const swaggerSpec = swaggerJsdoc(swaggerOptions);
 // Routes
 app.use('/api/auth', require('./routes/auth'));
 app.use('/api/products', require('./routes/products'));
+app.use('/api/offerstrip', require('./routes/offerstrip'));
+app.use('/api/videoupload', require('./routes/videoupload'));
 app.use('/api/carousel', require('./routes/carousel'));
 app.use('/api/explore', require('./routes/explore'));
 app.use('/api/trending', require('./routes/trending'));

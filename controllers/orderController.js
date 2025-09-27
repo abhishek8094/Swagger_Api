@@ -193,8 +193,49 @@ exports.getUserOrders = async (req, res, next) => {
   }
 };
 
+// @desc    Delete order
+// @route   POST /api/orders/:id/delete
+// @access  Private
+exports.deleteOrder = async (req, res, next) => {
+  try {
+    const order = await Order.findOne({ orderId: req.params.id });
+
+    if (!order) {
+      const error = new Error('Order not found');
+      error.statusCode = 404;
+      return next(error);
+    }
+
+    // Check if user owns the order or is admin
+    if (order.user.toString() !== req.user._id.toString() && req.user.role !== 'admin') {
+      const error = new Error('Not authorized to delete this order');
+      error.statusCode = 403;
+      return next(error);
+    }
+
+    await Order.findByIdAndDelete(order._id);
+
+    logger.info(`Order deleted successfully: ${order._id}`);
+
+    res.status(200).json({
+      success: true,
+      message: 'Order deleted successfully'
+    });
+  } catch (error) {
+    if (error.name === 'CastError') {
+      const err = new Error('Invalid order ID');
+      err.statusCode = 400;
+      return next(err);
+    }
+
+    logger.error('Error deleting order', error);
+    error.statusCode = 400;
+    next(error);
+  }
+};
+
 // @desc    Update order status (Admin only)
-// @route   PUT /api/orders/:id/status
+// @route   POST /api/orders/:id/status
 // @access  Private/Admin
 exports.updateOrderStatus = async (req, res, next) => {
   try {

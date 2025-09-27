@@ -39,6 +39,11 @@ const productSchema = new mongoose.Schema({
     type: Boolean,
     default: false
   },
+  offerStrip: {
+    type: String,
+    trim: true,
+    maxlength: [200, 'Offer strip cannot be more than 200 characters']
+  },
   createdAt: {
     type: Date,
     default: Date.now
