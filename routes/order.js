@@ -3,7 +3,8 @@ const {
   addOrder,
   getOrder,
   getUserOrders,
-  updateOrderStatus
+  updateOrderStatus,
+  deleteOrder
 } = require('../controllers/orderController');
 const { protect, authorize } = require('../middleware/auth');
 
@@ -341,7 +342,7 @@ router.get('/:id', protect, getOrder);
 /**
  * @swagger
  * /api/orders/{id}/status:
- *   put:
+ *   post:
  *     summary: Update order status (Admin only)
  *     tags: [Orders]
  *     security:
@@ -403,6 +404,60 @@ router.get('/:id', protect, getOrder);
  *             schema:
  *               $ref: '#/components/schemas/Error'
  */
-router.put('/:id/status', protect, authorize('admin'), updateOrderStatus);
+router.post('/:id/status', protect, authorize('admin'), updateOrderStatus);
+
+/**
+ * @swagger
+ * /api/orders/{id}/delete:
+ *   post:
+ *     summary: Delete order by ID
+ *     tags: [Orders]
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         schema:
+ *           type: string
+ *         required: true
+ *         description: Order ID
+ *     responses:
+ *       200:
+ *         description: Order deleted successfully
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 success:
+ *                   type: boolean
+ *                 message:
+ *                   type: string
+ *       400:
+ *         description: Invalid order ID
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/Error'
+ *       401:
+ *         description: Not authorized
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/Error'
+ *       403:
+ *         description: Not authorized to delete this order
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/Error'
+ *       404:
+ *         description: Order not found
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/Error'
+ */
+router.post('/:id/delete', protect, deleteOrder);
 
 module.exports = router;

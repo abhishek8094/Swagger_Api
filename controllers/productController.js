@@ -61,7 +61,7 @@ exports.getProduct = async (req, res, next) => {
 // @access  Public
 exports.createProduct = async (req, res, next) => {
   try {
-    const { name, description, price, category, isExplore, size } = req.body;
+    const { name, description, price, category, isExplore, size, offerStrip } = req.body;
 
     // Validate required fields
     if (!size || !['S', 'M', 'L', 'XL'].includes(size)) {
@@ -119,7 +119,7 @@ exports.createProduct = async (req, res, next) => {
 // @access  Public
 exports.updateProduct = async (req, res, next) => {
   try {
-    const { name, description, price, category, size } = req.body;
+    const { name, description, price, category, size, offerStrip } = req.body;
 
     // Validate size if provided
     if (size && !['S', 'M', 'L', 'XL'].includes(size)) {
@@ -225,6 +225,156 @@ exports.deleteProduct = async (req, res, next) => {
   }
 };
 
+// @desc    Create/Update offerStrip for a product
+// @route   POST /api/products/offerstrip
+// @access  Public
+exports.createOfferStrip = async (req, res, next) => {
+  try {
+    const { productId, offerStrip } = req.body;
+
+    // Validate required fields
+    if (!productId) {
+      const error = new Error('Product ID is required');
+      error.statusCode = 400;
+      return next(error);
+    }
+
+    // Validate offerStrip
+    if (typeof offerStrip !== 'string' || offerStrip.length > 200) {
+      const error = new Error('Offer strip must be a string with maximum 200 characters');
+      error.statusCode = 400;
+      return next(error);
+    }
+
+    const product = await Product.findByIdAndUpdate(
+      productId,
+      { offerStrip: offerStrip.trim() },
+      {
+        new: true,
+        runValidators: true
+      }
+    );
+
+    if (!product) {
+      const error = new Error('Product not found');
+      error.statusCode = 404;
+      return next(error);
+    }
+
+    // Images are already full Cloudinary URLs
+    const productObj = product.toObject();
+
+    res.status(201).json({
+      success: true,
+      data: productObj
+    });
+  } catch (error) {
+    error.statusCode = 400;
+    next(error);
+  }
+};
+
+// @desc    Update offerStrip for a product
+// @route   POST /api/products/offerstrip/:id
+// @access  Public
+exports.updateOfferStrip = async (req, res, next) => {
+  try {
+    const { offerStrip } = req.body;
+
+    // Validate offerStrip
+    if (typeof offerStrip !== 'string' || offerStrip.length > 200) {
+      const error = new Error('Offer strip must be a string with maximum 200 characters');
+      error.statusCode = 400;
+      return next(error);
+    }
+
+    const product = await Product.findByIdAndUpdate(
+      req.params.id,
+      { offerStrip: offerStrip.trim() },
+      {
+        new: true,
+        runValidators: true
+      }
+    );
+
+    if (!product) {
+      const error = new Error('Product not found');
+      error.statusCode = 404;
+      return next(error);
+    }
+
+    // Images are already full Cloudinary URLs
+    const productObj = product.toObject();
+
+    res.status(200).json({
+      success: true,
+      data: productObj
+    });
+  } catch (error) {
+    error.statusCode = 400;
+    next(error);
+  }
+};
+
+// @desc    Delete offerStrip for a product
+// @route   POST /api/products/offerstrip/delete/:id
+// @access  Public
+exports.deleteOfferStrip = async (req, res, next) => {
+  try {
+    const product = await Product.findByIdAndUpdate(
+      req.params.id,
+      { offerStrip: '' },
+      {
+        new: true,
+        runValidators: true
+      }
+    );
+
+    if (!product) {
+      const error = new Error('Product not found');
+      error.statusCode = 404;
+      return next(error);
+    }
+
+    // Images are already full Cloudinary URLs
+    const productObj = product.toObject();
+
+    res.status(200).json({
+      success: true,
+      data: productObj,
+      message: 'Offer strip deleted successfully'
+    });
+  } catch (error) {
+    error.statusCode = 400;
+    next(error);
+  }
+};
+
+// @desc    Get offerStrip for a product
+// @route   GET /api/products/offerstrip/:id
+// @access  Public
+exports.getOfferStrip = async (req, res, next) => {
+  try {
+    const product = await Product.findById(req.params.id).select('offerStrip');
+
+    if (!product) {
+      const error = new Error('Product not found');
+      error.statusCode = 404;
+      return next(error);
+    }
+
+    res.status(200).json({
+      success: true,
+      data: {
+        offerStrip: product.offerStrip || ''
+      }
+    });
+  } catch (error) {
+    error.statusCode = 400;
+    next(error);
+  }
+};
+
 // @desc    Search products
 // @route   GET /api/products/search
 // @access  Public
@@ -256,6 +406,201 @@ exports.searchProducts = async (req, res, next) => {
       success: true,
       count: productsWithFullImage.length,
       data: productsWithFullImage
+    });
+  } catch (error) {
+    error.statusCode = 400;
+    next(error);
+  }
+};
+
+// @desc    Upload video for a product
+// @route   POST /api/videoupload
+// @access  Public
+exports.uploadVideo = async (req, res, next) => {
+  try {
+    const { productId } = req.body;
+
+    // Validate required fields
+    if (!productId) {
+      const error = new Error('Product ID is required');
+      error.statusCode = 400;
+      return next(error);
+    }
+
+    // Check if file was uploaded
+    if (!req.file) {
+      const error = new Error('Please upload a video');
+      error.statusCode = 400;
+      return next(error);
+    }
+
+    // Upload video to Cloudinary
+    const videoResult = await new Promise((resolve, reject) => {
+      const uploadStream = cloudinary.uploader.upload_stream(
+        { folder: 'videos', resource_type: 'video' },
+        (error, result) => {
+          if (error) reject(error);
+          else resolve(result);
+        }
+      );
+      uploadStream.end(req.file.buffer);
+    });
+
+    const videoUrl = videoResult.secure_url;
+
+    const product = await Product.findByIdAndUpdate(
+      productId,
+      { video: videoUrl },
+      {
+        new: true,
+        runValidators: true
+      }
+    );
+
+    if (!product) {
+      const error = new Error('Product not found');
+      error.statusCode = 404;
+      return next(error);
+    }
+
+    // Images are already full Cloudinary URLs
+    const productObj = product.toObject();
+
+    res.status(201).json({
+      success: true,
+      data: productObj
+    });
+  } catch (error) {
+    error.statusCode = 400;
+    next(error);
+  }
+};
+
+// @desc    Update video for a product
+// @route   POST /api/videoupload/:id
+// @access  Public
+exports.updateVideo = async (req, res, next) => {
+  try {
+    // Check if file was uploaded
+    if (!req.file) {
+      const error = new Error('Please upload a video');
+      error.statusCode = 400;
+      return next(error);
+    }
+
+    // Upload new video to Cloudinary
+    const videoResult = await new Promise((resolve, reject) => {
+      const uploadStream = cloudinary.uploader.upload_stream(
+        { folder: 'videos', resource_type: 'video' },
+        (error, result) => {
+          if (error) reject(error);
+          else resolve(result);
+        }
+      );
+      uploadStream.end(req.file.buffer);
+    });
+
+    const newVideoUrl = videoResult.secure_url;
+
+    // Delete old video from Cloudinary
+    const oldProduct = await Product.findById(req.params.id);
+    if (oldProduct && oldProduct.video) {
+      const oldPublicId = getPublicIdFromUrl(oldProduct.video);
+      if (oldPublicId) {
+        await cloudinary.uploader.destroy(oldPublicId, { resource_type: 'video' });
+      }
+    }
+
+    const product = await Product.findByIdAndUpdate(
+      req.params.id,
+      { video: newVideoUrl },
+      {
+        new: true,
+        runValidators: true
+      }
+    );
+
+    if (!product) {
+      const error = new Error('Product not found');
+      error.statusCode = 404;
+      return next(error);
+    }
+
+    // Images are already full Cloudinary URLs
+    const productObj = product.toObject();
+
+    res.status(200).json({
+      success: true,
+      data: productObj
+    });
+  } catch (error) {
+    error.statusCode = 400;
+    next(error);
+  }
+};
+
+// @desc    Delete video for a product
+// @route   POST /api/videoupload/delete/:id
+// @access  Public
+exports.deleteVideo = async (req, res, next) => {
+  try {
+    const product = await Product.findById(req.params.id);
+
+    if (!product) {
+      const error = new Error('Product not found');
+      error.statusCode = 404;
+      return next(error);
+    }
+
+    // Delete video from Cloudinary
+    if (product.video) {
+      const publicId = getPublicIdFromUrl(product.video);
+      if (publicId) {
+        await cloudinary.uploader.destroy(publicId, { resource_type: 'video' });
+      }
+    }
+
+    const updatedProduct = await Product.findByIdAndUpdate(
+      req.params.id,
+      { video: '' },
+      {
+        new: true,
+        runValidators: true
+      }
+    );
+
+    // Images are already full Cloudinary URLs
+    const productObj = updatedProduct.toObject();
+
+    res.status(200).json({
+      success: true,
+      data: productObj,
+      message: 'Video deleted successfully'
+    });
+  } catch (error) {
+    error.statusCode = 400;
+    next(error);
+  }
+};
+
+// @desc    Get video for a product
+// @route   GET /api/videoupload/:id
+// @access  Public
+exports.getVideo = async (req, res, next) => {
+  try {
+    const product = await Product.findById(req.params.id).select('video');
+
+    if (!product) {
+      const error = new Error('Product not found');
+      error.statusCode = 404;
+      return next(error);
+    }
+
+    res.status(200).json({
+      success: true,
+      data: {
+        video: product.video || ''
+      }
     });
   } catch (error) {
     error.statusCode = 400;

@@ -89,8 +89,10 @@ const router = express.Router();
  * @swagger
  * /api/addresses:
  *   get:
- *     summary: Get all addresses
+ *     summary: Get all addresses for the authenticated user
  *     tags: [Addresses]
+ *     security:
+ *       - bearerAuth: []
  *     responses:
  *       200:
  *         description: Addresses retrieved successfully
@@ -107,6 +109,12 @@ const router = express.Router();
  *                   type: array
  *                   items:
  *                     $ref: '#/components/schemas/Address'
+ *       401:
+ *         description: Not authorized to access this route
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/Error'
  *       400:
  *         description: Bad request
  *         content:
@@ -114,14 +122,16 @@ const router = express.Router();
  *             schema:
  *               $ref: '#/components/schemas/Error'
  */
-router.get('/', getAddresses);
+router.get('/', protect, getAddresses);
 
 /**
  * @swagger
  * /api/addresses/{id}:
  *   get:
- *     summary: Get single address
+ *     summary: Get single address for the authenticated user
  *     tags: [Addresses]
+ *     security:
+ *       - bearerAuth: []
  *     parameters:
  *       - in: path
  *         name: id
@@ -141,6 +151,12 @@ router.get('/', getAddresses);
  *                   type: boolean
  *                 data:
  *                   $ref: '#/components/schemas/Address'
+ *       401:
+ *         description: Not authorized to access this route
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/Error'
  *       404:
  *         description: Address not found
  *         content:
@@ -148,7 +164,7 @@ router.get('/', getAddresses);
  *             schema:
  *               $ref: '#/components/schemas/Error'
  */
-router.get('/:id', getAddress);
+router.get('/:id', protect, getAddress);
 
 /**
  * @swagger

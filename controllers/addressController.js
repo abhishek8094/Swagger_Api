@@ -1,12 +1,13 @@
 const Address = require('../models/Address');
 
-// @desc    Get all addresses
+// @desc    Get all addresses for the authenticated user
 // @route   GET /api/addresses
-// @access  Public
+// @access  Private
 exports.getAddresses = async (req, res, next) => {
   try {
     // Sort by defaultAddress descending first, then by createdAt descending
-    const addresses = await Address.find().sort({ defaultAddress: -1, createdAt: -1 });
+    // Only return addresses belonging to the authenticated user
+    const addresses = await Address.find({ user: req.user._id }).sort({ defaultAddress: -1, createdAt: -1 });
 
     res.status(200).json({
       success: true,
@@ -21,10 +22,11 @@ exports.getAddresses = async (req, res, next) => {
 
 // @desc    Get single address
 // @route   GET /api/addresses/:id
-// @access  Public
+// @access  Private
 exports.getAddress = async (req, res, next) => {
   try {
-    const address = await Address.findById(req.params.id);
+    // Only return address if it belongs to the authenticated user
+    const address = await Address.findOne({ _id: req.params.id, user: req.user._id });
 
     if (!address) {
       const error = new Error('Address not found');
@@ -130,10 +132,11 @@ exports.updateAddress = async (req, res, next) => {
 
 // @desc    Delete address
 // @route   DELETE /api/addresses/:id
-// @access  Public
+// @access  Private
 exports.deleteAddress = async (req, res, next) => {
   try {
-    const address = await Address.findById(req.params.id);
+    // Only allow deletion if address belongs to the authenticated user
+    const address = await Address.findOne({ _id: req.params.id, user: req.user._id });
 
     if (!address) {
       const error = new Error('Address not found');
@@ -146,8 +149,8 @@ exports.deleteAddress = async (req, res, next) => {
     await Address.findByIdAndDelete(req.params.id);
 
     if (wasDefault) {
-      // Set another address as default if any exist
-      const anotherAddress = await Address.findOne();
+      // Set another address as default if any exist (only for this user)
+      const anotherAddress = await Address.findOne({ user: req.user._id });
       if (anotherAddress) {
         anotherAddress.defaultAddress = true;
         await anotherAddress.save();
