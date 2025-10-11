@@ -10,7 +10,12 @@ const {
   getExploreCollection,
   getTrendingProducts,
   createExploreProduct,
-  searchProducts
+  searchProducts,
+  createOfferStrip,
+  updateOfferStrip,
+  deleteOfferStrip,
+  getAllOfferStrips,
+  getOfferStrip
 } = require('../controllers/productController');
 
 const router = express.Router();
@@ -100,8 +105,10 @@ const upload = multer({
 /**
  * @swagger
  * tags:
- *   name: Products
- *   description: Product management for carousel
+ *   - name: Products
+ *     description: Product management for carousel
+ *   - name: OfferStrip
+ *     description: Offer strip management for products
  */
 
 /**
@@ -369,5 +376,224 @@ router.post('/update/:id', upload.single('image'), updateProduct);
  *               $ref: '#/components/schemas/Error'
  */
 router.post('/delete/:id', deleteProduct);
+
+/**
+ * @swagger
+ * /api/products/{id}/offerstrip:
+ *   post:
+ *     summary: Create or update offerStrip text for a product
+ *     tags: [OfferStrip]
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         schema:
+ *           type: string
+ *         required: true
+ *         description: The product id
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required:
+ *               - offerStrip
+ *             properties:
+ *               offerStrip:
+ *                 type: string
+ *                 description: The offer strip text (max 200 characters)
+ *             example:
+ *               offerStrip: "Special 20% off today!"
+ *     responses:
+ *       201:
+ *         description: Offer strip created/updated successfully
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 success:
+ *                   type: boolean
+ *                 data:
+ *                   $ref: '#/components/schemas/Product'
+ *       400:
+ *         description: Invalid input
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/Error'
+ *       404:
+ *         description: Product not found
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/Error'
+ */
+router.post('/:id/offerstrip', createOfferStrip);
+
+/**
+ * @swagger
+ * /api/products/offerstrip:
+ *   get:
+ *     summary: Get offerStrip text for all products
+ *     tags: [OfferStrip]
+ *     responses:
+ *       200:
+ *         description: Offer strips retrieved successfully
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 success:
+ *                   type: boolean
+ *                 data:
+ *                   type: array
+ *                   items:
+ *                     type: object
+ *                     properties:
+ *                       _id:
+ *                         type: string
+ *                         description: Product ID
+ *                       offerStrip:
+ *                         type: string
+ *                         description: The offer strip text
+ *       400:
+ *         description: Bad request
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/Error'
+ */
+router.get('/offerstrip', getAllOfferStrips);
+
+/**
+ * @swagger
+ * /api/products/{id}/offerstrip:
+ *   get:
+ *     summary: Get offerStrip text for a product
+ *     tags: [OfferStrip]
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         schema:
+ *           type: string
+ *         required: true
+ *         description: The product id
+ *     responses:
+ *       200:
+ *         description: Offer strip retrieved successfully
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 success:
+ *                   type: boolean
+ *                 data:
+ *                   type: object
+ *                   properties:
+ *                     _id:
+ *                       type: string
+ *                       description: Product ID
+ *                     offerStrip:
+ *                       type: string
+ *                       description: The offer strip text
+ *       404:
+ *         description: Product not found
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/Error'
+ */
+router.get('/:id/offerstrip', getOfferStrip);
+
+/**
+ * @swagger
+ * /api/products/{id}/offerstrip:
+ *   put:
+ *     summary: Update offerStrip text for a product
+ *     tags: [OfferStrip]
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         schema:
+ *           type: string
+ *         required: true
+ *         description: The product id
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             properties:
+ *               offerStrip:
+ *                 type: string
+ *                 description: The offer strip text (max 200 characters)
+ *             example:
+ *               offerStrip: "Special 20% off today!"
+ *     responses:
+ *       200:
+ *         description: Offer strip updated successfully
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 success:
+ *                   type: boolean
+ *                 data:
+ *                   $ref: '#/components/schemas/Product'
+ *       400:
+ *         description: Invalid offer strip text
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/Error'
+ *       404:
+ *         description: Product not found
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/Error'
+ */
+router.put('/:id/offerstrip', updateOfferStrip);
+
+/**
+ * @swagger
+ * /api/products/{id}/offerstrip:
+ *   delete:
+ *     summary: Delete offerStrip text for a product
+ *     tags: [OfferStrip]
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         schema:
+ *           type: string
+ *         required: true
+ *         description: The product id
+ *     responses:
+ *       200:
+ *         description: Offer strip deleted successfully
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 success:
+ *                   type: boolean
+ *                 data:
+ *                   $ref: '#/components/schemas/Product'
+ *                 message:
+ *                   type: string
+ *       404:
+ *         description: Product not found
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/Error'
+ */
+router.delete('/:id/offerstrip', deleteOfferStrip);
 
 module.exports = router;

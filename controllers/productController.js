@@ -226,18 +226,12 @@ exports.deleteProduct = async (req, res, next) => {
 };
 
 // @desc    Create/Update offerStrip for a product
-// @route   POST /api/products/offerstrip
+// @route   POST /api/products/:id/offerstrip
 // @access  Public
 exports.createOfferStrip = async (req, res, next) => {
   try {
-    const { productId, offerStrip } = req.body;
-
-    // Validate required fields
-    if (!productId) {
-      const error = new Error('Product ID is required');
-      error.statusCode = 400;
-      return next(error);
-    }
+    const { offerStrip } = req.body;
+    const productId = req.params.id;
 
     // Validate offerStrip
     if (typeof offerStrip !== 'string' || offerStrip.length > 200) {
@@ -275,11 +269,19 @@ exports.createOfferStrip = async (req, res, next) => {
 };
 
 // @desc    Update offerStrip for a product
-// @route   POST /api/products/offerstrip/:id
+// @route   PUT /api/products/:id/offerstrip
 // @access  Public
 exports.updateOfferStrip = async (req, res, next) => {
   try {
     const { offerStrip } = req.body;
+    const productId = req.params.id;
+
+    // Validate productId presence
+    if (!productId) {
+      const error = new Error('Product ID is required');
+      error.statusCode = 400;
+      return next(error);
+    }
 
     // Validate offerStrip
     if (typeof offerStrip !== 'string' || offerStrip.length > 200) {
@@ -289,7 +291,7 @@ exports.updateOfferStrip = async (req, res, next) => {
     }
 
     const product = await Product.findByIdAndUpdate(
-      req.params.id,
+      productId,
       { offerStrip: offerStrip.trim() },
       {
         new: true,
@@ -317,12 +319,21 @@ exports.updateOfferStrip = async (req, res, next) => {
 };
 
 // @desc    Delete offerStrip for a product
-// @route   POST /api/products/offerstrip/delete/:id
+// @route   DELETE /api/products/:id/offerstrip
 // @access  Public
 exports.deleteOfferStrip = async (req, res, next) => {
   try {
+    const productId = req.params.id;
+
+    // Validate productId presence
+    if (!productId) {
+      const error = new Error('Product ID is required');
+      error.statusCode = 400;
+      return next(error);
+    }
+
     const product = await Product.findByIdAndUpdate(
-      req.params.id,
+      productId,
       { offerStrip: '' },
       {
         new: true,
@@ -350,12 +361,35 @@ exports.deleteOfferStrip = async (req, res, next) => {
   }
 };
 
+// @desc    Get offerStrip for all products
+// @route   GET /api/products/offerstrip
+// @access  Public
+exports.getAllOfferStrips = async (req, res, next) => {
+  try {
+    const products = await Product.find().select('_id offerStrip');
+
+    res.status(200).json({
+      success: true,
+      data: products.map(product => ({
+        _id: product._id,
+        offerStrip: product.offerStrip || ''
+      }))
+    });
+  } catch (error) {
+    error.statusCode = 400;
+    next(error);
+  }
+};
+
 // @desc    Get offerStrip for a product
-// @route   GET /api/products/offerstrip/:id
+// @route   GET /api/products/:id/offerstrip
 // @access  Public
 exports.getOfferStrip = async (req, res, next) => {
   try {
-    const product = await Product.findById(req.params.id).select('offerStrip');
+    const productId = req.params.id;
+
+    // Get offerStrip for a specific product
+    const product = await Product.findById(productId).select('_id offerStrip');
 
     if (!product) {
       const error = new Error('Product not found');
@@ -366,6 +400,7 @@ exports.getOfferStrip = async (req, res, next) => {
     res.status(200).json({
       success: true,
       data: {
+        _id: product._id,
         offerStrip: product.offerStrip || ''
       }
     });
