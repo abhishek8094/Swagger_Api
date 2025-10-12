@@ -1,3 +1,0 @@
-- [ ] Refactor offerstrip routes in routes/products.js to use :id path parameter instead of productId query for GET, PUT, DELETE
-- [ ] Update controller functions in controllers/productController.js to use req.params.id instead of req.query.productId for updateOfferStrip, deleteOfferStrip, getOfferStrip
-- [ ] Test the refactored routes to ensure they work correctly
