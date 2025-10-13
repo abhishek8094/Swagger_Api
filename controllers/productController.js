@@ -89,7 +89,7 @@ exports.createProduct = async (req, res, next) => {
       uploadStream.end(req.file.buffer);
     });
 
-    const imageUrl = imageResult.secure_url;
+    const image = imageResult.secure_url;
 
     const product = await Product.create({
       name,
@@ -97,7 +97,7 @@ exports.createProduct = async (req, res, next) => {
       price: parseFloat(price),
       size,
       category,
-      imageUrl: imageUrl,
+      image: image,
       isExplore: isExplore || false
     });
 
@@ -111,7 +111,7 @@ exports.createProduct = async (req, res, next) => {
       description: productObj.description,
       price: productObj.price,
       size: productObj.size,
-      imageUrl: productObj.imageUrl,
+      image: productObj.image,
       createdAt: productObj.createdAt
     };
 
@@ -172,7 +172,7 @@ exports.updateProduct = async (req, res, next) => {
         }
       }
 
-      updateData.imageUrl = newImageUrl;
+      updateData.image = newImageUrl;
     }
 
     const product = await Product.findByIdAndUpdate(
@@ -217,8 +217,8 @@ exports.deleteProduct = async (req, res, next) => {
     }
 
     // Delete image from Cloudinary
-    if (product.imageUrl) {
-      const publicId = getPublicIdFromUrl(product.imageUrl);
+    if (product.image) {
+      const publicId = getPublicIdFromUrl(product.image);
       if (publicId) {
         await cloudinary.uploader.destroy(publicId);
       }
