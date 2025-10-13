@@ -14,7 +14,7 @@ const getPublicIdFromUrl = (url) => {
 // @access  Public
 exports.getTrendingProducts = async (req, res, next) => {
   try {
-    const products = await Product.find()
+    const products = await Product.find({ isTrending: true })
       .sort({ createdAt: -1 })
       .limit(10)
       .select('_id name description price image subImg category');
