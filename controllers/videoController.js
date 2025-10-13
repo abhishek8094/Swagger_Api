@@ -99,7 +99,7 @@ exports.getVideo = async (req, res, next) => {
 };
 
 // @desc    Update video
-// @route   PUT /api/videoupload/:id
+// @route   POST /api/videoupload/:id/update
 // @access  Public
 exports.updateVideo = async (req, res, next) => {
   try {
@@ -165,7 +165,7 @@ exports.updateVideo = async (req, res, next) => {
 };
 
 // @desc    Delete video
-// @route   DELETE /api/videoupload/:id
+// @route   POST /api/videoupload/:id/delete
 // @access  Public
 exports.deleteVideo = async (req, res, next) => {
   try {
