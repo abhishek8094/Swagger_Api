@@ -45,7 +45,7 @@ exports.getTrendingProducts = async (req, res, next) => {
 // @access  Public
 exports.getTrendingProduct = async (req, res, next) => {
   try {
-    const product = await Product.findById(req.params.id);
+    const product = await Product.findOne({ _id: req.params.id, isTrending: true });
 
     if (!product) {
       const error = new Error('Trending product not found');
@@ -140,6 +140,14 @@ exports.createTrendingProduct = async (req, res, next) => {
 // @access  Public
 exports.updateTrendingProduct = async (req, res, next) => {
   try {
+    // Check if product is trending
+    const existingProduct = await Product.findOne({ _id: req.params.id, isTrending: true });
+    if (!existingProduct) {
+      const error = new Error('Trending product not found');
+      error.statusCode = 404;
+      return next(error);
+    }
+
     const { name, description, price, category, size } = req.body;
 
     // Validate size if provided
@@ -243,7 +251,7 @@ exports.updateTrendingProduct = async (req, res, next) => {
 // @access  Public
 exports.deleteTrendingProduct = async (req, res, next) => {
   try {
-    const product = await Product.findById(req.params.id);
+    const product = await Product.findOne({ _id: req.params.id, isTrending: true });
 
     if (!product) {
       const error = new Error('Trending product not found');
