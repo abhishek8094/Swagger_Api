@@ -97,16 +97,27 @@ exports.createProduct = async (req, res, next) => {
       price: parseFloat(price),
       size,
       category,
-      image: imageUrl,
+      imageUrl: imageUrl,
       isExplore: isExplore || false
     });
 
     // Images are already full Cloudinary URLs
     const productObj = product.toObject();
 
+    // Transform to match the example response
+    const transformedData = {
+      id: productObj._id,
+      name: productObj.name,
+      description: productObj.description,
+      price: productObj.price,
+      size: productObj.size,
+      imageUrl: productObj.imageUrl,
+      createdAt: productObj.createdAt
+    };
+
     res.status(201).json({
       success: true,
-      data: productObj
+      data: transformedData
     });
   } catch (error) {
     error.statusCode = 400;
@@ -154,14 +165,14 @@ exports.updateProduct = async (req, res, next) => {
 
       // Delete old image from Cloudinary
       const oldProduct = await Product.findById(req.params.id);
-      if (oldProduct && oldProduct.image) {
-        const oldPublicId = getPublicIdFromUrl(oldProduct.image);
+      if (oldProduct && oldProduct.imageUrl) {
+        const oldPublicId = getPublicIdFromUrl(oldProduct.imageUrl);
         if (oldPublicId) {
           await cloudinary.uploader.destroy(oldPublicId);
         }
       }
 
-      updateData.image = newImageUrl;
+      updateData.imageUrl = newImageUrl;
     }
 
     const product = await Product.findByIdAndUpdate(
@@ -206,8 +217,8 @@ exports.deleteProduct = async (req, res, next) => {
     }
 
     // Delete image from Cloudinary
-    if (product.image) {
-      const publicId = getPublicIdFromUrl(product.image);
+    if (product.imageUrl) {
+      const publicId = getPublicIdFromUrl(product.imageUrl);
       if (publicId) {
         await cloudinary.uploader.destroy(publicId);
       }
