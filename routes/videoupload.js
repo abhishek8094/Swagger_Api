@@ -5,8 +5,9 @@ const {
   uploadVideo,
   updateVideo,
   deleteVideo,
+  getAllVideos,
   getVideo
-} = require('../controllers/productController');
+} = require('../controllers/videoController');
 
 const router = express.Router();
 
@@ -34,12 +35,12 @@ const upload = multer({
  * @swagger
  * components:
  *   schemas:
- *     VideoUpload:
+ *     Video:
  *       type: object
  *       properties:
- *         productId:
+ *         title:
  *           type: string
- *           description: The product ID
+ *           description: The video title
  *         video:
  *           type: string
  *           format: binary
@@ -50,14 +51,14 @@ const upload = multer({
  * @swagger
  * tags:
  *   name: VideoUpload
- *   description: Video upload management for products
+ *   description: Video upload management
  */
 
 /**
  * @swagger
  * /api/videoupload:
  *   post:
- *     summary: Upload video for a product
+ *     summary: Upload a video
  *     tags: [VideoUpload]
  *     requestBody:
  *       required: true
@@ -66,12 +67,12 @@ const upload = multer({
  *           schema:
  *             type: object
  *             required:
- *               - productId
+ *               - title
  *               - video
  *             properties:
- *               productId:
+ *               title:
  *                 type: string
- *                 description: The product ID
+ *                 description: Video title
  *               video:
  *                 type: string
  *                 format: binary
@@ -87,7 +88,7 @@ const upload = multer({
  *                 success:
  *                   type: boolean
  *                 data:
- *                   $ref: '#/components/schemas/Product'
+ *                   $ref: '#/components/schemas/Video'
  *       400:
  *         description: Bad request
  *         content:
@@ -99,9 +100,41 @@ router.post('/', upload.single('video'), uploadVideo);
 
 /**
  * @swagger
+ * /api/videoupload:
+ *   get:
+ *     summary: Get all videos
+ *     tags: [VideoUpload]
+ *     responses:
+ *       200:
+ *         description: Videos retrieved successfully
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 success:
+ *                   type: boolean
+ *                 count:
+ *                   type: integer
+ *                   description: Number of videos
+ *                 data:
+ *                   type: array
+ *                   items:
+ *                     $ref: '#/components/schemas/Video'
+ *       400:
+ *         description: Bad request
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/Error'
+ */
+router.get('/', getAllVideos);
+
+/**
+ * @swagger
  * /api/videoupload/{id}:
  *   get:
- *     summary: Get video for a product
+ *     summary: Get a single video
  *     tags: [VideoUpload]
  *     parameters:
  *       - in: path
@@ -109,7 +142,7 @@ router.post('/', upload.single('video'), uploadVideo);
  *         schema:
  *           type: string
  *         required: true
- *         description: The id
+ *         description: The video ID
  *     responses:
  *       200:
  *         description: Video retrieved successfully
@@ -121,13 +154,9 @@ router.post('/', upload.single('video'), uploadVideo);
  *                 success:
  *                   type: boolean
  *                 data:
- *                   type: object
- *                   properties:
- *                     video:
- *                       type: string
- *                       description: The video URL
+ *                   $ref: '#/components/schemas/Video'
  *       404:
- *         description: Product not found
+ *         description: Video not found
  *         content:
  *           application/json:
  *             schema:
@@ -138,8 +167,8 @@ router.get('/:id', getVideo);
 /**
  * @swagger
  * /api/videoupload/{id}:
- *   post:
- *     summary: Update video for a product
+ *   put:
+ *     summary: Update a video
  *     tags: [VideoUpload]
  *     parameters:
  *       - in: path
@@ -147,20 +176,21 @@ router.get('/:id', getVideo);
  *         schema:
  *           type: string
  *         required: true
- *         description: The id
+ *         description: The video ID
  *     requestBody:
  *       required: true
  *       content:
  *         multipart/form-data:
  *           schema:
  *             type: object
- *             required:
- *               - video
  *             properties:
+ *               title:
+ *                 type: string
+ *                 description: Video title
  *               video:
  *                 type: string
  *                 format: binary
- *                 description: New video file
+ *                 description: Video file
  *     responses:
  *       200:
  *         description: Video updated successfully
@@ -172,21 +202,21 @@ router.get('/:id', getVideo);
  *                 success:
  *                   type: boolean
  *                 data:
- *                   $ref: '#/components/schemas/Product'
+ *                   $ref: '#/components/schemas/Video'
  *       404:
- *         description: Product not found
+ *         description: Video not found
  *         content:
  *           application/json:
  *             schema:
  *               $ref: '#/components/schemas/Error'
  */
-router.post('/:id', upload.single('video'), updateVideo);
+router.put('/:id', upload.single('video'), updateVideo);
 
 /**
  * @swagger
- * /api/videoupload/delete/{id}:
- *   post:
- *     summary: Delete video for a product
+ * /api/videoupload/{id}:
+ *   delete:
+ *     summary: Delete a video
  *     tags: [VideoUpload]
  *     parameters:
  *       - in: path
@@ -194,7 +224,7 @@ router.post('/:id', upload.single('video'), updateVideo);
  *         schema:
  *           type: string
  *         required: true
- *         description: The id
+ *         description: The video ID
  *     responses:
  *       200:
  *         description: Video deleted successfully
@@ -205,17 +235,19 @@ router.post('/:id', upload.single('video'), updateVideo);
  *               properties:
  *                 success:
  *                   type: boolean
- *                 data:
- *                   $ref: '#/components/schemas/Product'
  *                 message:
  *                   type: string
  *       404:
- *         description: Product not found
+ *         description: Video not found
  *         content:
  *           application/json:
  *             schema:
  *               $ref: '#/components/schemas/Error'
  */
-router.post('/delete/:id', deleteVideo);
+router.delete('/:id', deleteVideo);
+
+
+
+
 
 module.exports = router;
