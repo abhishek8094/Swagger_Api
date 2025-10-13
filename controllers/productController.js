@@ -449,11 +449,11 @@ exports.searchProducts = async (req, res, next) => {
 };
 
 // @desc    Upload video for a product
-// @route   POST /api/videoupload
+// @route   POST /api/videoupload/:productId
 // @access  Public
 exports.uploadVideo = async (req, res, next) => {
   try {
-    const { productId } = req.body;
+    const { productId } = req.params;
 
     // Validate required fields
     if (!productId) {
@@ -512,7 +512,7 @@ exports.uploadVideo = async (req, res, next) => {
 };
 
 // @desc    Update video for a product
-// @route   POST /api/videoupload/:id
+// @route   POST /api/videoupload/:productId
 // @access  Public
 exports.updateVideo = async (req, res, next) => {
   try {
@@ -538,7 +538,7 @@ exports.updateVideo = async (req, res, next) => {
     const newVideoUrl = videoResult.secure_url;
 
     // Delete old video from Cloudinary
-    const oldProduct = await Product.findById(req.params.id);
+    const oldProduct = await Product.findById(req.params.productId);
     if (oldProduct && oldProduct.video) {
       const oldPublicId = getPublicIdFromUrl(oldProduct.video);
       if (oldPublicId) {
@@ -547,7 +547,7 @@ exports.updateVideo = async (req, res, next) => {
     }
 
     const product = await Product.findByIdAndUpdate(
-      req.params.id,
+      req.params.productId,
       { video: newVideoUrl },
       {
         new: true,
@@ -575,11 +575,11 @@ exports.updateVideo = async (req, res, next) => {
 };
 
 // @desc    Delete video for a product
-// @route   POST /api/videoupload/delete/:id
+// @route   DELETE /api/videoupload/:productId
 // @access  Public
 exports.deleteVideo = async (req, res, next) => {
   try {
-    const product = await Product.findById(req.params.id);
+    const product = await Product.findById(req.params.productId);
 
     if (!product) {
       const error = new Error('Product not found');
@@ -596,7 +596,7 @@ exports.deleteVideo = async (req, res, next) => {
     }
 
     const updatedProduct = await Product.findByIdAndUpdate(
-      req.params.id,
+      req.params.productId,
       { video: '' },
       {
         new: true,
@@ -618,24 +618,22 @@ exports.deleteVideo = async (req, res, next) => {
   }
 };
 
-// @desc    Get video for a product
-// @route   GET /api/videoupload/:id
+// @desc    Get all videos for products
+// @route   GET /api/videoupload
 // @access  Public
-exports.getVideo = async (req, res, next) => {
+exports.getAllVideos = async (req, res, next) => {
   try {
-    const product = await Product.findById(req.params.id).select('video');
+    const products = await Product.find().select('_id video');
 
-    if (!product) {
-      const error = new Error('Product not found');
-      error.statusCode = 404;
-      return next(error);
-    }
+    const videos = products.map(product => ({
+      id: product._id,
+      video: product.video || ''
+    }));
 
     res.status(200).json({
       success: true,
-      data: {
-        video: product.video || ''
-      }
+      count: videos.length,
+      data: videos
     });
   } catch (error) {
     error.statusCode = 400;

@@ -17,12 +17,14 @@ exports.getExploreCollection = async (req, res, next) => {
     // Build query
     let query = { isExplore: true };
 
+    // Get unique categories from explore products
+    const categories = await Product.distinct('category', query);
+
     // Get explore products
     const products = await Product.find(query).sort({ createdAt: -1 }).select('name price image category');
 
-    // Initialize groupedProducts with all possible categories
-    const allCategories = ['Compression Fit', 'T-Shirts', 'Joggers', 'Shorts', 'Stringers'];
-    const groupedProducts = allCategories.reduce((acc, category) => {
+    // Initialize groupedProducts with unique categories
+    const groupedProducts = categories.reduce((acc, category) => {
       acc[category] = [];
       return acc;
     }, {});
