@@ -13,7 +13,6 @@ const router = express.Router();
 
 // Configure multer for video uploads
 const storage = multer.memoryStorage();
-
 // File filter for videos only
 const fileFilter = (req, file, cb) => {
   if (file.mimetype.startsWith('video/')) {
@@ -166,8 +165,8 @@ router.get('/:id', getVideo);
 
 /**
  * @swagger
- * /api/videoupload/{id}:
- *   put:
+ * /api/videoupload/{id}/update:
+ *   post:
  *     summary: Update a video
  *     tags: [VideoUpload]
  *     parameters:
@@ -210,12 +209,12 @@ router.get('/:id', getVideo);
  *             schema:
  *               $ref: '#/components/schemas/Error'
  */
-router.put('/:id', upload.single('video'), updateVideo);
+router.post('/:id/update', upload.single('video'), updateVideo);
 
 /**
  * @swagger
- * /api/videoupload/{id}:
- *   delete:
+ * /api/videoupload/{id}/delete:
+ *   post:
  *     summary: Delete a video
  *     tags: [VideoUpload]
  *     parameters:
@@ -244,7 +243,7 @@ router.put('/:id', upload.single('video'), updateVideo);
  *             schema:
  *               $ref: '#/components/schemas/Error'
  */
-router.delete('/:id', deleteVideo);
+router.post('/:id/delete', deleteVideo);
 
 
 
