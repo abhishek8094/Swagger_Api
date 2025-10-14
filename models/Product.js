@@ -39,6 +39,10 @@ const productSchema = new mongoose.Schema({
     type: Boolean,
     default: false
   },
+  isTrending: {
+    type: Boolean,
+    default: false
+  },
   offerStrip: {
     type: String,
     trim: true,
