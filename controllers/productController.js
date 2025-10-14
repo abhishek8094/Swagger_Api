@@ -1,5 +1,4 @@
 const Product = require('../models/Product');
-const Category = require('../models/Category');
 const path = require('path');
 const fs = require('fs');
 const cloudinary = require('../config/cloudinary');
@@ -15,7 +14,7 @@ const getPublicIdFromUrl = (url) => {
 // @access  Public
 exports.getProducts = async (req, res, next) => {
   try {
-    const products = await Product.find().populate('category').sort({ createdAt: -1 });
+    const products = await Product.find().sort({ createdAt: -1 });
 
     // Images are already full Cloudinary URLs
     const productsWithFullImage = products.map(product => product.toObject());
@@ -36,7 +35,7 @@ exports.getProducts = async (req, res, next) => {
 // @access  Public
 exports.getProduct = async (req, res, next) => {
   try {
-    const product = await Product.findById(req.params.id).populate('category');
+    const product = await Product.findById(req.params.id);
 
     if (!product) {
       const error = new Error('Product not found');
@@ -72,15 +71,10 @@ exports.createProduct = async (req, res, next) => {
     }
 
     // Validate category if provided
-    let categoryId = null;
-    if (category) {
-      const categoryDoc = await Category.findOne({ title: category });
-      if (!categoryDoc) {
-        const error = new Error('Invalid category');
-        error.statusCode = 400;
-        return next(error);
-      }
-      categoryId = categoryDoc._id;
+    if (!category || typeof category !== 'string' || category.trim() === '') {
+      const error = new Error('Please provide a valid category name');
+      error.statusCode = 400;
+      return next(error);
     }
 
     // Check if file was uploaded
@@ -109,7 +103,7 @@ exports.createProduct = async (req, res, next) => {
       description,
       price: parseFloat(price),
       size,
-      category: categoryId,
+      category: category.trim(),
       image: image,
       isExplore: isExplore || false
     });
@@ -153,22 +147,17 @@ exports.updateProduct = async (req, res, next) => {
     }
 
     // Validate category if provided
-    let categoryId = null;
-    if (category) {
-      const categoryDoc = await Category.findOne({ title: category });
-      if (!categoryDoc) {
-        const error = new Error('Invalid category');
-        error.statusCode = 400;
-        return next(error);
-      }
-      categoryId = categoryDoc._id;
+    if (category && (typeof category !== 'string' || category.trim() === '')) {
+      const error = new Error('Please provide a valid category name');
+      error.statusCode = 400;
+      return next(error);
     }
 
     let updateData = {
       name,
       description,
       price: parseFloat(price),
-      category: categoryId,
+      category: category ? category.trim() : undefined,
       size
     };
 
@@ -468,7 +457,7 @@ exports.searchProducts = async (req, res, next) => {
       query.category = category;
     }
 
-    const products = await Product.find(query).populate('category').sort({ createdAt: -1 });
+    const products = await Product.find(query).sort({ createdAt: -1 });
 
     // Images are already full Cloudinary URLs
     const productsWithFullImage = products.map(product => product.toObject());
