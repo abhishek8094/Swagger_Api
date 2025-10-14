@@ -71,8 +71,8 @@ exports.createTrendingProduct = async (req, res, next) => {
     const { name, description, price, category, size } = req.body;
 
     // Validate required fields
-    if (!size || !['S', 'M', 'L', 'XL'].includes(size)) {
-      const error = new Error('Please add a valid product size (S, M, L, XL)');
+    if (!size) {
+      const error = new Error('Please add a product size');
       error.statusCode = 400;
       return next(error);
     }
@@ -151,8 +151,8 @@ exports.updateTrendingProduct = async (req, res, next) => {
     const { name, description, price, category, size } = req.body;
 
     // Validate size if provided
-    if (size && !['S', 'M', 'L', 'XL'].includes(size)) {
-      const error = new Error('Please add a valid product size (S, M, L, XL)');
+    if (size && typeof size !== 'string') {
+      const error = new Error('Size must be a string');
       error.statusCode = 400;
       return next(error);
     }
