@@ -245,11 +245,11 @@ exports.resetPassword = async (req, res, next) => {
 // @access  Private
 exports.updateProfile = async (req, res, next) => {
   try {
-    const { firstName, lastName } = req.body;
+    const { firstName, lastName, password } = req.body;
 
     // Validate at least one field is provided
-    if (!firstName && !lastName) {
-      const error = new Error('Please provide firstName or lastName to update');
+    if (!firstName && !lastName && !password) {
+      const error = new Error('Please provide firstName, lastName, or password to update');
       error.statusCode = 400;
       return next(error);
     }
@@ -258,6 +258,11 @@ exports.updateProfile = async (req, res, next) => {
     const updateFields = {};
     if (firstName) updateFields.firstName = firstName;
     if (lastName) updateFields.lastName = lastName;
+    if (password) {
+      // Hash password with cost of 12
+      const salt = await bcrypt.genSalt(12);
+      updateFields.password = await bcrypt.hash(password, salt);
+    }
 
     // Update user
     const user = await User.findByIdAndUpdate(
