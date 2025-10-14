@@ -72,13 +72,15 @@ exports.createProduct = async (req, res, next) => {
     }
 
     // Validate category if provided
+    let categoryId = null;
     if (category) {
-      const categoryExists = await Category.findById(category);
-      if (!categoryExists) {
-        const error = new Error('Invalid category ID');
+      const categoryDoc = await Category.findOne({ title: category });
+      if (!categoryDoc) {
+        const error = new Error('Invalid category');
         error.statusCode = 400;
         return next(error);
       }
+      categoryId = categoryDoc._id;
     }
 
     // Check if file was uploaded
@@ -107,7 +109,7 @@ exports.createProduct = async (req, res, next) => {
       description,
       price: parseFloat(price),
       size,
-      category,
+      category: categoryId,
       image: image,
       isExplore: isExplore || false
     });
@@ -151,20 +153,22 @@ exports.updateProduct = async (req, res, next) => {
     }
 
     // Validate category if provided
+    let categoryId = null;
     if (category) {
-      const categoryExists = await Category.findById(category);
-      if (!categoryExists) {
-        const error = new Error('Invalid category ID');
+      const categoryDoc = await Category.findOne({ title: category });
+      if (!categoryDoc) {
+        const error = new Error('Invalid category');
         error.statusCode = 400;
         return next(error);
       }
+      categoryId = categoryDoc._id;
     }
 
     let updateData = {
       name,
       description,
       price: parseFloat(price),
-      category,
+      category: categoryId,
       size
     };
 
