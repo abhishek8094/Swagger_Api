@@ -63,7 +63,6 @@ const upload = multer({
  *           description: The product category
  *         size:
  *           type: string
- *           enum: [S, M, L, XL]
  *           description: The product size
  *         createdAt:
  *           type: string
@@ -182,7 +181,6 @@ router.get('/', getExploreCollection);
  *                 description: Product category
  *               size:
  *                 type: string
- *                 enum: [S, M, L, XL]
  *                 description: Product size
  *               image:
  *                 type: string
@@ -279,7 +277,6 @@ router.post('/update/:id', upload.single('image'), updateExploreProduct);
  *                 description: Product category
  *               size:
  *                 type: string
- *                 enum: [S, M, L, XL]
  *                 description: Product size
  *               image:
  *                 type: string

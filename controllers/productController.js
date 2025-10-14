@@ -1,4 +1,5 @@
 const Product = require('../models/Product');
+const Accessory = require('../models/Accessory');
 const path = require('path');
 const fs = require('fs');
 const cloudinary = require('../config/cloudinary');
@@ -30,25 +31,31 @@ exports.getProducts = async (req, res, next) => {
   }
 };
 
-// @desc    Get single product
+// @desc    Get single product or accessory
 // @route   GET /api/products/:id
 // @access  Public
 exports.getProduct = async (req, res, next) => {
   try {
-    const product = await Product.findById(req.params.id);
+    // First, try to find in Product model
+    let item = await Product.findById(req.params.id);
 
-    if (!product) {
+    if (!item) {
+      // If not found in Product, try Accessory model
+      item = await Accessory.findById(req.params.id);
+    }
+
+    if (!item) {
       const error = new Error('Product not found');
       error.statusCode = 404;
       return next(error);
     }
 
     // Images are already full Cloudinary URLs
-    const productObj = product.toObject();
+    const itemObj = item.toObject();
 
     res.status(200).json({
       success: true,
-      data: productObj
+      data: itemObj
     });
   } catch (error) {
     error.statusCode = 400;
@@ -64,8 +71,8 @@ exports.createProduct = async (req, res, next) => {
     const { name, description, price, category, isExplore, size, offerStrip } = req.body;
 
     // Validate required fields
-    if (!size || !['S', 'M', 'L', 'XL'].includes(size)) {
-      const error = new Error('Please add a valid product size (S, M, L, XL)');
+    if (!size) {
+      const error = new Error('Please add a product size');
       error.statusCode = 400;
       return next(error);
     }
@@ -140,8 +147,8 @@ exports.updateProduct = async (req, res, next) => {
     const { name, description, price, category, size, offerStrip } = req.body;
 
     // Validate size if provided
-    if (size && !['S', 'M', 'L', 'XL'].includes(size)) {
-      const error = new Error('Please add a valid product size (S, M, L, XL)');
+    if (size && typeof size !== 'string') {
+      const error = new Error('Size must be a string');
       error.statusCode = 400;
       return next(error);
     }
