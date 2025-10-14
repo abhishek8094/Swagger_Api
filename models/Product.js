@@ -30,10 +30,9 @@ const productSchema = new mongoose.Schema({
     type: String
   },
   category: {
-    type: String,
-    required: [true, 'Please add a product category'],
-    enum: ['Compression Fit', 'T-Shirts', 'Joggers', 'Shorts', 'Stringers'],
-    trim: true
+    type: mongoose.Schema.Types.ObjectId,
+    ref: 'Category',
+    required: [true, 'Please add a product category']
   },
   isExplore: {
     type: Boolean,

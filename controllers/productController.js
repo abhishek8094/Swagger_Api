@@ -1,4 +1,5 @@
 const Product = require('../models/Product');
+const Category = require('../models/Category');
 const path = require('path');
 const fs = require('fs');
 const cloudinary = require('../config/cloudinary');
@@ -14,7 +15,7 @@ const getPublicIdFromUrl = (url) => {
 // @access  Public
 exports.getProducts = async (req, res, next) => {
   try {
-    const products = await Product.find().sort({ createdAt: -1 });
+    const products = await Product.find().populate('category').sort({ createdAt: -1 });
 
     // Images are already full Cloudinary URLs
     const productsWithFullImage = products.map(product => product.toObject());
@@ -35,7 +36,7 @@ exports.getProducts = async (req, res, next) => {
 // @access  Public
 exports.getProduct = async (req, res, next) => {
   try {
-    const product = await Product.findById(req.params.id);
+    const product = await Product.findById(req.params.id).populate('category');
 
     if (!product) {
       const error = new Error('Product not found');
@@ -68,6 +69,16 @@ exports.createProduct = async (req, res, next) => {
       const error = new Error('Please add a valid product size (S, M, L, XL)');
       error.statusCode = 400;
       return next(error);
+    }
+
+    // Validate category if provided
+    if (category) {
+      const categoryExists = await Category.findById(category);
+      if (!categoryExists) {
+        const error = new Error('Invalid category ID');
+        error.statusCode = 400;
+        return next(error);
+      }
     }
 
     // Check if file was uploaded
@@ -139,6 +150,16 @@ exports.updateProduct = async (req, res, next) => {
       return next(error);
     }
 
+    // Validate category if provided
+    if (category) {
+      const categoryExists = await Category.findById(category);
+      if (!categoryExists) {
+        const error = new Error('Invalid category ID');
+        error.statusCode = 400;
+        return next(error);
+      }
+    }
+
     let updateData = {
       name,
       description,
@@ -165,8 +186,8 @@ exports.updateProduct = async (req, res, next) => {
 
       // Delete old image from Cloudinary
       const oldProduct = await Product.findById(req.params.id);
-      if (oldProduct && oldProduct.imageUrl) {
-        const oldPublicId = getPublicIdFromUrl(oldProduct.imageUrl);
+      if (oldProduct && oldProduct.image) {
+        const oldPublicId = getPublicIdFromUrl(oldProduct.image);
         if (oldPublicId) {
           await cloudinary.uploader.destroy(oldPublicId);
         }
@@ -443,7 +464,7 @@ exports.searchProducts = async (req, res, next) => {
       query.category = category;
     }
 
-    const products = await Product.find(query).sort({ createdAt: -1 });
+    const products = await Product.find(query).populate('category').sort({ createdAt: -1 });
 
     // Images are already full Cloudinary URLs
     const productsWithFullImage = products.map(product => product.toObject());
