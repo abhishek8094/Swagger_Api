@@ -473,9 +473,13 @@ router.get('/me', protect, getMe);
  *               lastName:
  *                 type: string
  *                 description: The user's last name
+ *               password:
+ *                 type: string
+ *                 description: The user's new password
  *             example:
  *               firstName: John
  *               lastName: Doe
+ *               password: newPassword123
  *     responses:
  *       200:
  *         description: User profile updated successfully
