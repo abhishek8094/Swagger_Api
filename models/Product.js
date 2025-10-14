@@ -30,8 +30,7 @@ const productSchema = new mongoose.Schema({
     type: String
   },
   category: {
-    type: mongoose.Schema.Types.ObjectId,
-    ref: 'Category',
+    type: String,
     required: [true, 'Please add a product category']
   },
   isExplore: {
