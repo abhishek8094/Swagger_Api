@@ -259,9 +259,7 @@ exports.updateProfile = async (req, res, next) => {
     if (firstName) updateFields.firstName = firstName;
     if (lastName) updateFields.lastName = lastName;
     if (password) {
-      // Hash password with cost of 12
-      const salt = await bcrypt.genSalt(12);
-      updateFields.password = await bcrypt.hash(password, salt);
+      updateFields.password = password;
     }
 
     // Update user
@@ -381,13 +379,14 @@ exports.getAllUsers = async (req, res, next) => {
 // @access  Private/Admin
 exports.updateUserById = async (req, res, next) => {
   try {
-    const { firstName, lastName, email, role } = req.body;
+    const { firstName, lastName, email, password, role } = req.body;
 
     // Build update object
     const updateFields = {};
     if (firstName !== undefined) updateFields.firstName = firstName;
     if (lastName !== undefined) updateFields.lastName = lastName;
     if (email !== undefined) updateFields.email = email;
+    if (password !== undefined) updateFields.password = password;
     if (role !== undefined) updateFields.role = role;
 
     // Validate at least one field is provided
@@ -404,7 +403,7 @@ exports.updateUserById = async (req, res, next) => {
         new: true,
         runValidators: true
       }
-    ).select('-password');
+    ).select('+password');
 
     if (!user) {
       const error = new Error('User not found');
