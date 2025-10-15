@@ -16,10 +16,16 @@ exports.getAccessories = async (req, res, next) => {
   try {
     const accessories = await Accessory.find().sort({ createdAt: -1 });
 
+    // Standardize images as array
+    const accessoriesWithImagesArray = accessories.map(accessory => ({
+      ...accessory.toObject(),
+      images: [accessory.image]
+    }));
+
     res.status(200).json({
       success: true,
-      count: accessories.length,
-      data: accessories
+      count: accessoriesWithImagesArray.length,
+      data: accessoriesWithImagesArray
     });
   } catch (error) {
     error.statusCode = 400;
@@ -40,9 +46,15 @@ exports.getAccessory = async (req, res, next) => {
       return next(error);
     }
 
+    // Standardize images as array
+    const accessoryWithImagesArray = {
+      ...accessory.toObject(),
+      images: [accessory.image]
+    };
+
     res.status(200).json({
       success: true,
-      data: accessory
+      data: accessoryWithImagesArray
     });
   } catch (error) {
     error.statusCode = 400;

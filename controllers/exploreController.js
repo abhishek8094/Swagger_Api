@@ -37,7 +37,7 @@ exports.getExploreCollection = async (req, res, next) => {
           id: product._id,
           title: product.name,
           price: product.price,
-          image: product.image,
+          images: [product.image],
           category: product.category
         });
       }
