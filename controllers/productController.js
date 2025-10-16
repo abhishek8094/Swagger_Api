@@ -114,7 +114,6 @@ exports.createProduct = async (req, res, next) => {
       image: image,
       isExplore: isExplore || false
     });
-
     // Images are already full Cloudinary URLs
     const productObj = product.toObject();
 
