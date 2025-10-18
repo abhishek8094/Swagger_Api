@@ -12,9 +12,15 @@ const accessorySchema = new mongoose.Schema({
     required: [true, 'Please add a price'],
     min: [0, 'Price cannot be negative']
   },
-  image: {
-    type: String,
-    required: [true, 'Please add an image']
+  images: {
+    type: [String],
+    required: [true, 'Please add at least one image'],
+    validate: {
+      validator: function(v) {
+        return v && v.length > 0;
+      },
+      message: 'At least one image is required'
+    }
   },
   createdAt: {
     type: Date,
