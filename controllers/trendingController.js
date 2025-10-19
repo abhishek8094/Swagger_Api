@@ -25,6 +25,7 @@ exports.getTrendingProducts = async (req, res, next) => {
       description: product.description,
       price: product.price,
       images: product.images,
+      image: product.images[0],
       category: product.category
     }));
 
