@@ -57,7 +57,12 @@ const upload = multer({
  *           description: The product price
  *         image:
  *           type: string
- *           description: The URL of the product image
+ *           description: The URL of the first product image
+ *         images:
+ *           type: array
+ *           items:
+ *             type: string
+ *           description: Array of URLs for all product images
  *         category:
  *           type: string
  *           description: The product category
@@ -74,6 +79,10 @@ const upload = multer({
  *         description: Premium compression fit for optimal performance
  *         price: 39.99
  *         image: https://res.cloudinary.com/your-cloud-name/image/upload/v123456789/explore/explore-123456789.jpg
+ *         images: [
+ *           "https://res.cloudinary.com/your-cloud-name/image/upload/v123456789/explore/explore-123456789.jpg",
+ *           "https://res.cloudinary.com/your-cloud-name/image/upload/v123456789/explore/explore-123456789-2.jpg"
+ *         ]
  *         category: "Compression Fit"
  *         size: "M"
  *         createdAt: 2023-10-01T10:00:00.000Z
@@ -119,6 +128,10 @@ const upload = multer({
  *                           type: number
  *                         image:
  *                           type: string
+ *                         images:
+ *                           type: array
+ *                           items:
+ *                             type: string
  *                         category:
  *                           type: string
  *             example:
@@ -131,12 +144,14 @@ const upload = multer({
  *                     title: "Compression T-Shirt"
  *                     price: 29.99
  *                     image: "https://res.cloudinary.com/your-cloud-name/image/upload/v123456789/products/tshirt-123.jpg"
+ *                     images: ["https://res.cloudinary.com/your-cloud-name/image/upload/v123456789/products/tshirt-123.jpg"]
  *                     category: "T-Shirts"
  *                 "Joggers":
  *                   - id: "60d5ecb74b24c72b8c8b4568"
  *                     title: "Slim Fit Joggers"
  *                     price: 49.99
  *                     image: "https://res.cloudinary.com/your-cloud-name/image/upload/v123456789/products/joggers-456.jpg"
+ *                     images: ["https://res.cloudinary.com/your-cloud-name/image/upload/v123456789/products/joggers-456.jpg"]
  *                     category: "Joggers"
  *                 "Shorts": []
  *                 "Stringers": []

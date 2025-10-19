@@ -19,7 +19,7 @@ const carouselImages = await Carousel.find()
 
     const images = carouselImages.map(item => ({
       id: item._id,
-      images: [item.imageUrl]
+      image: item.imageUrl
     }));
 
     res.status(200).json({
