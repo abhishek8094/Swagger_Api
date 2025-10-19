@@ -30,7 +30,7 @@ const swaggerOptions = {
   definition: {
     openapi: '3.0.0',
     info: {
-      title: 'E-commerce  API',
+      title: 'E-commerce API',
       version: '1.0.0',
       description: 'A complete authentication API with MongoDB and JWT',
       contact: {
@@ -40,7 +40,7 @@ const swaggerOptions = {
     },
     servers: [
       {
-        url: ` http://localhost:3001`,
+        url: `https://blackwizard.cloud`,
         description: 'Development server'
       }
     ],
@@ -71,7 +71,6 @@ app.use('/api/addresses', require('./routes/address'));
 app.use('/api/orders', require('./routes/order'));
 app.use('/api/contacts', require('./routes/contact'));
 app.use('/api/accessories', require('./routes/accessories'));
-app.use('/api/upload-images', require('./routes/upload'));
 
 // Serve static files for uploaded images
 app.use('/uploads', express.static('public/uploads'));
