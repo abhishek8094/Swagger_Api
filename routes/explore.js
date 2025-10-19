@@ -220,7 +220,7 @@ router.get('/', getExploreCollection);
  *             schema:
  *               $ref: '#/components/schemas/Error'
  */
-router.post('/', upload.single('image'), createExploreProduct);
+router.post('/', upload.array('images', 10), createExploreProduct);
 
 /**
  * @swagger
@@ -256,7 +256,7 @@ router.post('/', upload.single('image'), createExploreProduct);
  */
 router.get('/:id', getExploreProduct);
 
-router.post('/update/:id', upload.single('image'), updateExploreProduct);
+router.post('/update/:id', upload.array('images', 10), updateExploreProduct);
 
 /**
  * @swagger

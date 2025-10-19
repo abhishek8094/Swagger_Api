@@ -14,25 +14,27 @@ const getPublicIdFromUrl = (url) => {
 // @access  Public
 exports.getTrendingProducts = async (req, res, next) => {
   try {
+    // Get trending products
     const products = await Product.find({ isTrending: true })
       .sort({ createdAt: -1 })
       .limit(10)
-      .select('_id name description price images category');
+      .select('name description price images category');
 
-    const trendingProducts = products.map(product => ({
+    // Map products to the desired format
+    const data = products.map(product => ({
       id: product._id,
       title: product.name,
       description: product.description,
       price: product.price,
       images: product.images,
-      image: product.images[0],
+      image: product.images[0] || null,
       category: product.category
     }));
 
     res.status(200).json({
       success: true,
       message: 'Trending products retrieved successfully',
-      data: trendingProducts
+      data: data
     });
   } catch (error) {
     error.statusCode = 400;
@@ -78,7 +80,7 @@ exports.createTrendingProduct = async (req, res, next) => {
     }
 
     // Check if files were uploaded
-    if (!req.files || !req.files.images || req.files.images.length === 0) {
+    if (!req.files || req.files.length === 0) {
       const error = new Error('Please upload at least one image');
       error.statusCode = 400;
       return next(error);
@@ -151,7 +153,7 @@ exports.updateTrendingProduct = async (req, res, next) => {
     };
 
     // If new images uploaded, update images
-    if (req.files && req.files.images && req.files.images.length > 0) {
+    if (req.files && req.files.length > 0) {
       // Upload new images to Cloudinary
       const newImageUrls = [];
       for (const file of req.files.images) {

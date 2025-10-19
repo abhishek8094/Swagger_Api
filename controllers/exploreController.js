@@ -17,37 +17,24 @@ exports.getExploreCollection = async (req, res, next) => {
     // Build query
     let query = { isExplore: true };
 
-    // Get unique categories from explore products
-    const categories = await Product.distinct('category', query);
-
     // Get explore products
-    const products = await Product.find(query).sort({ createdAt: -1 }).select('name price images category');
+    const products = await Product.find(query).sort({ createdAt: -1 }).select('name description price images category');
 
-    // Initialize groupedProducts with unique categories
-    const groupedProducts = categories.reduce((acc, category) => {
-      acc[category] = [];
-      return acc;
-    }, {});
-
-    // Group products by category
-    products.forEach(product => {
-      const category = product.category;
-      if (groupedProducts[category]) {
-        groupedProducts[category].push({
-          id: product._id,
-          title: product.name,
-          price: product.price,
-          images: product.images,
-          image: product.images[0],
-          category: product.category
-        });
-      }
-    });
+    // Map products to the desired format
+    const data = products.map(product => ({
+      id: product._id,
+      title: product.name,
+      description: product.description,
+      price: product.price,
+      images: product.images,
+      image: product.images[0] || null,
+      category: product.category
+    }));
 
     res.status(200).json({
       success: true,
       message: 'Discover premium fitness wear for every workout',
-      data: groupedProducts
+      data: data
     });
   } catch (error) {
     error.statusCode = 400;
@@ -86,7 +73,7 @@ exports.createExploreProduct = async (req, res, next) => {
     const { name, description, price, category, size } = req.body;
 
     // Check if files were uploaded
-    if (!req.files || !req.files.images || req.files.images.length === 0) {
+    if (!req.files || req.files.length === 0) {
       const error = new Error('Please upload at least one image');
       error.statusCode = 400;
       return next(error);
@@ -161,7 +148,7 @@ exports.updateExploreProduct = async (req, res, next) => {
     };
 
     // If new images uploaded, update images
-    if (req.files && req.files.images && req.files.images.length > 0) {
+    if (req.files && req.files.length > 0) {
       // Upload new images to Cloudinary
       const newImageUrls = [];
       for (const file of req.files.images) {
