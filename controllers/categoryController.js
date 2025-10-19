@@ -21,7 +21,7 @@ exports.getCategories = async (req, res, next) => {
       message: 'Categories retrieved successfully',
       data: categories.map(cat => ({
         title: cat.title,
-        image: cat.imageUrl,
+        images: [cat.imageUrl],
         id: cat._id
       }))
     });

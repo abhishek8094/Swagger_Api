@@ -16,10 +16,13 @@ exports.getAccessories = async (req, res, next) => {
   try {
     const accessories = await Accessory.find().sort({ createdAt: -1 });
 
+    // Images are already arrays
+    const accessoriesWithImagesArray = accessories.map(accessory => accessory.toObject());
+
     res.status(200).json({
       success: true,
-      count: accessories.length,
-      data: accessories
+      count: accessoriesWithImagesArray.length,
+      data: accessoriesWithImagesArray
     });
   } catch (error) {
     error.statusCode = 400;
@@ -40,9 +43,12 @@ exports.getAccessory = async (req, res, next) => {
       return next(error);
     }
 
+    // Images are already arrays
+    const accessoryWithImagesArray = accessory.toObject();
+
     res.status(200).json({
       success: true,
-      data: accessory
+      data: accessoryWithImagesArray
     });
   } catch (error) {
     error.statusCode = 400;
@@ -64,31 +70,33 @@ exports.createAccessory = async (req, res, next) => {
       return next(error);
     }
 
-    // Check if file was uploaded
-    if (!req.file) {
-      const error = new Error('Please upload an image');
+    // Check if files were uploaded
+    if (!req.files || !req.files.images || req.files.images.length === 0) {
+      const error = new Error('Please upload at least one image');
       error.statusCode = 400;
       return next(error);
     }
 
-    // Upload image to Cloudinary
-    const imageResult = await new Promise((resolve, reject) => {
-      const uploadStream = cloudinary.uploader.upload_stream(
-        { folder: 'accessories' },
-        (error, result) => {
-          if (error) reject(error);
-          else resolve(result);
-        }
-      );
-      uploadStream.end(req.file.buffer);
-    });
-
-    const imageUrl = imageResult.secure_url;
+    // Upload images to Cloudinary
+    const imageUrls = [];
+    for (const file of req.files.images) {
+      const imageResult = await new Promise((resolve, reject) => {
+        const uploadStream = cloudinary.uploader.upload_stream(
+          { folder: 'accessories' },
+          (error, result) => {
+            if (error) reject(error);
+            else resolve(result);
+          }
+        );
+        uploadStream.end(file.buffer);
+      });
+      imageUrls.push(imageResult.secure_url);
+    }
 
     const accessory = await Accessory.create({
       name,
       price: parseFloat(price),
-      image: imageUrl
+      images: imageUrls
     });
 
     res.status(201).json({
@@ -113,32 +121,36 @@ exports.updateAccessory = async (req, res, next) => {
       price: parseFloat(price)
     };
 
-    // If new image uploaded, update image
-    if (req.file) {
-      // Upload new image to Cloudinary
-      const imageResult = await new Promise((resolve, reject) => {
-        const uploadStream = cloudinary.uploader.upload_stream(
-          { folder: 'accessories' },
-          (error, result) => {
-            if (error) reject(error);
-            else resolve(result);
-          }
-        );
-        uploadStream.end(req.file.buffer);
-      });
+    // If new images uploaded, update images
+    if (req.files && req.files.images && req.files.images.length > 0) {
+      // Upload new images to Cloudinary
+      const newImageUrls = [];
+      for (const file of req.files.images) {
+        const imageResult = await new Promise((resolve, reject) => {
+          const uploadStream = cloudinary.uploader.upload_stream(
+            { folder: 'accessories' },
+            (error, result) => {
+              if (error) reject(error);
+              else resolve(result);
+            }
+          );
+          uploadStream.end(file.buffer);
+        });
+        newImageUrls.push(imageResult.secure_url);
+      }
 
-      const newImageUrl = imageResult.secure_url;
-
-      // Delete old image from Cloudinary
+      // Delete old images from Cloudinary
       const oldAccessory = await Accessory.findById(req.params.id);
-      if (oldAccessory && oldAccessory.image) {
-        const oldPublicId = getPublicIdFromUrl(oldAccessory.image);
-        if (oldPublicId) {
-          await cloudinary.uploader.destroy(oldPublicId);
+      if (oldAccessory && oldAccessory.images && oldAccessory.images.length > 0) {
+        for (const oldImageUrl of oldAccessory.images) {
+          const oldPublicId = getPublicIdFromUrl(oldImageUrl);
+          if (oldPublicId) {
+            await cloudinary.uploader.destroy(oldPublicId);
+          }
         }
       }
 
-      updateData.image = newImageUrl;
+      updateData.images = newImageUrls;
     }
 
     const accessory = await Accessory.findByIdAndUpdate(
@@ -179,11 +191,13 @@ exports.deleteAccessory = async (req, res, next) => {
       return next(error);
     }
 
-    // Delete image from Cloudinary
-    if (accessory.image) {
-      const publicId = getPublicIdFromUrl(accessory.image);
-      if (publicId) {
-        await cloudinary.uploader.destroy(publicId);
+    // Delete images from Cloudinary
+    if (accessory.images && accessory.images.length > 0) {
+      for (const imageUrl of accessory.images) {
+        const publicId = getPublicIdFromUrl(imageUrl);
+        if (publicId) {
+          await cloudinary.uploader.destroy(publicId);
+        }
       }
     }
 
