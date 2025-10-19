@@ -29,10 +29,7 @@ const productSchema = new mongoose.Schema({
         return v && v.length > 0;
       },
       message: 'At least one image is required'
-    }
-  },
-  images: {
-    type: [String],
+    },
     default: []
   },
   category: {
