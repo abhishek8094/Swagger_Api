@@ -28,6 +28,10 @@ const productSchema = new mongoose.Schema({
   subImg: {
     type: String
   },
+  images: {
+    type: [String],
+    default: []
+  },
   category: {
     type: String,
     required: [true, 'Please add a product category']

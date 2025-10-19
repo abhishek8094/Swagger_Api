@@ -16,6 +16,10 @@ const accessorySchema = new mongoose.Schema({
     type: String,
     required: [true, 'Please add an image']
   },
+  images: {
+    type: [String],
+    default: []
+  },
   createdAt: {
     type: Date,
     default: Date.now
