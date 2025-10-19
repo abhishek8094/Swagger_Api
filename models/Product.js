@@ -31,6 +31,10 @@ const productSchema = new mongoose.Schema({
       message: 'At least one image is required'
     }
   },
+  images: {
+    type: [String],
+    default: []
+  },
   category: {
     type: String,
     required: [true, 'Please add a product category']

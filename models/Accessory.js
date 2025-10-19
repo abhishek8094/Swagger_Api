@@ -22,6 +22,10 @@ const accessorySchema = new mongoose.Schema({
       message: 'At least one image is required'
     }
   },
+  images: {
+    type: [String],
+    default: []
+  },
   createdAt: {
     type: Date,
     default: Date.now
