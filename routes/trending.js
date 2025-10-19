@@ -163,10 +163,7 @@ router.get('/', getTrendingProducts);
  *             schema:
  *               $ref: '#/components/schemas/Error'
  */
-router.post('/', upload.fields([
-  { name: 'image', maxCount: 1 },
-  { name: 'subImg', maxCount: 1 }
-]), createTrendingProduct);
+router.post('/', upload.array('images', 10), createTrendingProduct);
 
 /**
  * @swagger
@@ -264,10 +261,7 @@ router.get('/:id', getTrendingProduct);
  *             schema:
  *               $ref: '#/components/schemas/Error'
  */
-router.post('/update/:id', upload.fields([
-  { name: 'image', maxCount: 1 },
-  { name: 'subImg', maxCount: 1 }
-]), updateTrendingProduct);
+router.post('/update/:id', upload.array('images', 10), updateTrendingProduct);
 
 /**
  * @swagger
