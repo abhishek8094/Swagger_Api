@@ -17,24 +17,36 @@ exports.getExploreCollection = async (req, res, next) => {
     // Build query
     let query = { isExplore: true };
 
-    // Get explore products
-    const products = await Product.find(query).sort({ createdAt: -1 }).select('name description price images category');
+    // Get unique categories from explore products
+    const categories = await Product.distinct('category', query);
 
-    // Map products to the desired format
-    const data = products.map(product => ({
-      id: product._id,
-      title: product.name,
-      description: product.description,
-      price: product.price,
-      images: product.images,
-      image: product.images[0] || null,
-      category: product.category
-    }));
+    // Get explore products
+    const products = await Product.find(query).sort({ createdAt: -1 }).select('name price image images category');
+
+    // Initialize groupedProducts with unique categories
+    const groupedProducts = categories.reduce((acc, category) => {
+      acc[category] = [];
+      return acc;
+    }, {});
+
+    // Group products by category
+    products.forEach(product => {
+      const category = product.category;
+      if (groupedProducts[category]) {
+        groupedProducts[category].push({
+          id: product._id,
+          title: product.name,
+          price: product.price,
+          image: product.image,
+          category: product.category
+        });
+      }
+    });
 
     res.status(200).json({
       success: true,
       message: 'Discover premium fitness wear for every workout',
-      data: data
+      data: groupedProducts
     });
   } catch (error) {
     error.statusCode = 400;
@@ -72,35 +84,26 @@ exports.createExploreProduct = async (req, res, next) => {
   try {
     const { name, description, price, category, size } = req.body;
 
-    // Validate required fields
-    if (!size) {
-      const error = new Error('Please add a product size');
+    // Check if file was uploaded
+    if (!req.file) {
+      const error = new Error('Please upload an image');
       error.statusCode = 400;
       return next(error);
     }
 
-    // Check if files were uploaded
-    if (!req.files || req.files.length === 0) {
-      const error = new Error('Please upload at least one image');
-      error.statusCode = 400;
-      return next(error);
-    }
+    // Upload to Cloudinary
+    const result = await new Promise((resolve, reject) => {
+      const uploadStream = cloudinary.uploader.upload_stream(
+        { folder: 'explore' },
+        (error, result) => {
+          if (error) reject(error);
+          else resolve(result);
+        }
+      );
+      uploadStream.end(req.file.buffer);
+    });
 
-    // Upload images to Cloudinary
-    const imageUrls = [];
-    for (const file of req.files.images) {
-      const imageResult = await new Promise((resolve, reject) => {
-        const uploadStream = cloudinary.uploader.upload_stream(
-          { folder: 'explore' },
-          (error, result) => {
-            if (error) reject(error);
-            else resolve(result);
-          }
-        );
-        uploadStream.end(file.buffer);
-      });
-      imageUrls.push(imageResult.secure_url);
-    }
+    const image = result.secure_url;
 
     const product = await Product.create({
       name,
@@ -108,7 +111,8 @@ exports.createExploreProduct = async (req, res, next) => {
       price: parseFloat(price),
       category,
       size,
-      images: imageUrls,
+      image,
+      images: [image],
       isExplore: true
     });
 
@@ -122,7 +126,7 @@ exports.createExploreProduct = async (req, res, next) => {
         price: product.price,
         category: product.category,
         size: product.size,
-        images: imageUrls
+        image: image
       }
     });
   } catch (error) {
@@ -154,35 +158,31 @@ exports.updateExploreProduct = async (req, res, next) => {
       size
     };
 
-    // If new images uploaded, update images
-    if (req.files && req.files.length > 0) {
-      // Upload new images to Cloudinary
-      const newImageUrls = [];
-      for (const file of req.files.images) {
-        const imageResult = await new Promise((resolve, reject) => {
-          const uploadStream = cloudinary.uploader.upload_stream(
-            { folder: 'explore' },
-            (error, result) => {
-              if (error) reject(error);
-              else resolve(result);
-            }
-          );
-          uploadStream.end(file.buffer);
-        });
-        newImageUrls.push(imageResult.secure_url);
-      }
-
-      // Delete old images from Cloudinary
-      if (product.images && product.images.length > 0) {
-        for (const oldImageUrl of product.images) {
-          const oldPublicId = getPublicIdFromUrl(oldImageUrl);
-          if (oldPublicId) {
-            await cloudinary.uploader.destroy(oldPublicId);
+    if (req.file) {
+      // Upload new to Cloudinary
+      const result = await new Promise((resolve, reject) => {
+        const uploadStream = cloudinary.uploader.upload_stream(
+          { folder: 'explore' },
+          (error, result) => {
+            if (error) reject(error);
+            else resolve(result);
           }
+        );
+        uploadStream.end(req.file.buffer);
+      });
+
+      const newImage = result.secure_url;
+
+      // Delete old from Cloudinary
+      if (product.image) {
+        const oldPublicId = getPublicIdFromUrl(product.image);
+        if (oldPublicId) {
+          await cloudinary.uploader.destroy(oldPublicId);
         }
       }
 
-      updateData.images = newImageUrls;
+      updateData.image = newImage;
+      updateData.images = [newImage];
     }
 
     const updatedProduct = await Product.findByIdAndUpdate(
@@ -204,7 +204,7 @@ exports.updateExploreProduct = async (req, res, next) => {
         price: updatedProduct.price,
         category: updatedProduct.category,
         size: updatedProduct.size,
-        images: updatedProduct.images
+        image: updatedProduct.image
       }
     });
   } catch (error) {
@@ -226,13 +226,11 @@ exports.deleteExploreProduct = async (req, res, next) => {
       return next(error);
     }
 
-    // Delete images from Cloudinary
-    if (product.images && product.images.length > 0) {
-      for (const imageUrl of product.images) {
-        const publicId = getPublicIdFromUrl(imageUrl);
-        if (publicId) {
-          await cloudinary.uploader.destroy(publicId);
-        }
+    // Delete image from Cloudinary
+    if (product.image) {
+      const publicId = getPublicIdFromUrl(product.image);
+      if (publicId) {
+        await cloudinary.uploader.destroy(publicId);
       }
     }
 
@@ -245,5 +243,4 @@ exports.deleteExploreProduct = async (req, res, next) => {
   } catch (error) {
     error.statusCode = 400;
     next(error);
-  }
-};
+  }}

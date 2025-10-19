@@ -12,6 +12,7 @@ const productSchema = new mongoose.Schema({
     trim: true,
     maxlength: [500, 'Description cannot be more than 500 characters']
   },
+  
   price: {
     type: Number,
     required: [true, 'Please add a price'],
@@ -20,6 +21,10 @@ const productSchema = new mongoose.Schema({
   size: {
     type: String,
     required: [true, 'Please add a product size']
+  },
+  image: {
+    type: String,
+    required: [true, 'Please add an image']
   },
   images: {
     type: [String],
