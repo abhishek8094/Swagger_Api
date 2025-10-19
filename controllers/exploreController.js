@@ -72,6 +72,13 @@ exports.createExploreProduct = async (req, res, next) => {
   try {
     const { name, description, price, category, size } = req.body;
 
+    // Validate required fields
+    if (!size) {
+      const error = new Error('Please add a product size');
+      error.statusCode = 400;
+      return next(error);
+    }
+
     // Check if files were uploaded
     if (!req.files || req.files.length === 0) {
       const error = new Error('Please upload at least one image');
@@ -238,4 +245,5 @@ exports.deleteExploreProduct = async (req, res, next) => {
   } catch (error) {
     error.statusCode = 400;
     next(error);
-  }}
+  }
+};
