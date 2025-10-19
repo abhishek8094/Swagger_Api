@@ -71,7 +71,7 @@ app.use('/api/addresses', require('./routes/address'));
 app.use('/api/orders', require('./routes/order'));
 app.use('/api/contacts', require('./routes/contact'));
 app.use('/api/accessories', require('./routes/accessories'));
-app.use('/api/upload', require('./routes/upload'));
+app.use('/api/upload-images', require('./routes/upload'));
 
 // Serve static files for uploaded images
 app.use('/uploads', express.static('public/uploads'));
