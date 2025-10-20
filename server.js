@@ -24,7 +24,6 @@ app.use(cors({
   origin: '*',
   credentials: true
 }));
-
 // Swagger configuration
 const swaggerOptions = {
   definition: {
@@ -40,7 +39,7 @@ const swaggerOptions = {
     },
     servers: [
       {
-        url: `http://localhost:3001/`,
+        url: `https://blackwizard.cloud/`,
         description: 'Development server'
       }
     ],
