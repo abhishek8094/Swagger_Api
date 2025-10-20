@@ -39,7 +39,7 @@ exports.getExploreCollection = async (req, res, next) => {
           title: product.name,
           price: product.price,
           image: product.image,
-          images: product.images,
+          images: product.images.map(img => img.url),
           category: product.category
         });
       }
