@@ -1,4 +1,3 @@
-
 const Product = require('../models/Product');
 const Accessory = require('../models/Accessory');
 const cloudinary = require('../config/cloudinary');
@@ -27,7 +26,7 @@ exports.uploadMultipleImages = async (req, res, next) => {
 
     // Validate productId is a valid ObjectId
     if (!mongoose.Types.ObjectId.isValid(productId)) {
-      const error = new Error('Invalid Product ID format');
+      const error = new Error('Invalid ID format');
       error.statusCode = 400;
       return next(error);
     }
@@ -100,7 +99,7 @@ exports.uploadMultipleImages = async (req, res, next) => {
     });
   } catch (error) {
     if (error.name === 'CastError') {
-      const newError = new Error('Invalid Product ID format');
+      const newError = new Error('Invalid ID format');
       newError.statusCode = 400;
       return next(newError);
     }
@@ -125,7 +124,7 @@ exports.deleteMultipleImages = async (req, res, next) => {
 
     // Validate productId is a valid ObjectId
     if (!mongoose.Types.ObjectId.isValid(productId)) {
-      const error = new Error('Invalid Product ID format');
+      const error = new Error('Invalid ID format');
       error.statusCode = 400;
       return next(error);
     }
@@ -186,7 +185,7 @@ exports.deleteMultipleImages = async (req, res, next) => {
     });
   } catch (error) {
     if (error.name === 'CastError') {
-      const newError = new Error('Invalid Product ID format');
+      const newError = new Error('Invalid ID format');
       newError.statusCode = 400;
       return next(newError);
     }
@@ -211,7 +210,7 @@ exports.deleteImagesByIndex = async (req, res, next) => {
 
     // Validate productId is a valid ObjectId
     if (!mongoose.Types.ObjectId.isValid(productId)) {
-      const error = new Error('Invalid Product ID format');
+      const error = new Error('Invalid ID format');
       error.statusCode = 400;
       return next(error);
     }
@@ -298,7 +297,7 @@ exports.deleteImagesByIndex = async (req, res, next) => {
     });
   } catch (error) {
     if (error.name === 'CastError') {
-      const newError = new Error('Invalid Product ID format');
+      const newError = new Error('Invalid ID format');
       newError.statusCode = 400;
       return next(newError);
     }

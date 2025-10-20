@@ -17,7 +17,7 @@ exports.getTrendingProducts = async (req, res, next) => {
     const products = await Product.find({ isTrending: true })
       .sort({ createdAt: -1 })
       .limit(10)
-      .select('_id name description price image subImg category');
+      .select('_id name description price image subImg images category');
 
     const trendingProducts = products.map(product => ({
       id: product._id,
@@ -26,6 +26,7 @@ exports.getTrendingProducts = async (req, res, next) => {
       price: product.price,
       image: product.image,
       subImg: product.subImg,
+      images: product.images,
       category: product.category
     }));
 

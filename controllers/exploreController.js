@@ -21,7 +21,7 @@ exports.getExploreCollection = async (req, res, next) => {
     const categories = await Product.distinct('category', query);
 
     // Get explore products
-    const products = await Product.find(query).sort({ createdAt: -1 }).select('name price image images category');
+    const products = await Product.find(query).sort({ createdAt: -1 }).select('name price image images category _id');
 
     // Initialize groupedProducts with unique categories
     const groupedProducts = categories.reduce((acc, category) => {
@@ -38,6 +38,7 @@ exports.getExploreCollection = async (req, res, next) => {
           title: product.name,
           price: product.price,
           image: product.image,
+          images: product.images,
           category: product.category
         });
       }
