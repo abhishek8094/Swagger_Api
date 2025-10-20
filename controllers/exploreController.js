@@ -85,26 +85,28 @@ exports.createExploreProduct = async (req, res, next) => {
   try {
     const { name, description, price, category, size } = req.body;
 
-    // Check if file was uploaded
-    if (!req.file) {
-      const error = new Error('Please upload an image');
+    // Check if files were uploaded
+    if (!req.files || !req.files.images || req.files.images.length === 0) {
+      const error = new Error('Please upload at least one image');
       error.statusCode = 400;
       return next(error);
     }
 
-    // Upload to Cloudinary
-    const result = await new Promise((resolve, reject) => {
-      const uploadStream = cloudinary.uploader.upload_stream(
-        { folder: 'explore' },
-        (error, result) => {
-          if (error) reject(error);
-          else resolve(result);
-        }
-      );
-      uploadStream.end(req.file.buffer);
-    });
-
-    const image = result.secure_url;
+    // Upload images to Cloudinary
+    const imageUrls = [];
+    for (const file of req.files.images) {
+      const imageResult = await new Promise((resolve, reject) => {
+        const uploadStream = cloudinary.uploader.upload_stream(
+          { folder: 'explore' },
+          (error, result) => {
+            if (error) reject(error);
+            else resolve(result);
+          }
+        );
+        uploadStream.end(file.buffer);
+      });
+      imageUrls.push(imageResult.secure_url);
+    }
 
     const product = await Product.create({
       name,
@@ -112,8 +114,8 @@ exports.createExploreProduct = async (req, res, next) => {
       price: parseFloat(price),
       category,
       size,
-      image,
-      images: [image],
+      images: imageUrls,
+      image: imageUrls[0], // Set main image to first image
       isExplore: true
     });
 
@@ -127,7 +129,7 @@ exports.createExploreProduct = async (req, res, next) => {
         price: product.price,
         category: product.category,
         size: product.size,
-        image: image
+        image: imageUrls[0]
       }
     });
   } catch (error) {
@@ -159,31 +161,36 @@ exports.updateExploreProduct = async (req, res, next) => {
       size
     };
 
-    if (req.file) {
-      // Upload new to Cloudinary
-      const result = await new Promise((resolve, reject) => {
-        const uploadStream = cloudinary.uploader.upload_stream(
-          { folder: 'explore' },
-          (error, result) => {
-            if (error) reject(error);
-            else resolve(result);
+    // If new images uploaded, update images
+    if (req.files && req.files.images && req.files.images.length > 0) {
+      // Upload new images to Cloudinary
+      const newImageUrls = [];
+      for (const file of req.files.images) {
+        const imageResult = await new Promise((resolve, reject) => {
+          const uploadStream = cloudinary.uploader.upload_stream(
+            { folder: 'explore' },
+            (error, result) => {
+              if (error) reject(error);
+              else resolve(result);
+            }
+          );
+          uploadStream.end(file.buffer);
+        });
+        newImageUrls.push(imageResult.secure_url);
+      }
+
+      // Delete old images from Cloudinary
+      if (product.images && product.images.length > 0) {
+        for (const oldImageUrl of product.images) {
+          const oldPublicId = getPublicIdFromUrl(oldImageUrl);
+          if (oldPublicId) {
+            await cloudinary.uploader.destroy(oldPublicId);
           }
-        );
-        uploadStream.end(req.file.buffer);
-      });
-
-      const newImage = result.secure_url;
-
-      // Delete old from Cloudinary
-      if (product.image) {
-        const oldPublicId = getPublicIdFromUrl(product.image);
-        if (oldPublicId) {
-          await cloudinary.uploader.destroy(oldPublicId);
         }
       }
 
-      updateData.image = newImage;
-      updateData.images = [newImage];
+      updateData.images = newImageUrls;
+      updateData.image = newImageUrls[0]; // Set main image to first image
     }
 
     const updatedProduct = await Product.findByIdAndUpdate(

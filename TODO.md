@@ -1,4 +1,13 @@
-# TODO: Fix Invalid Product ID Format Error
+# TODO: Fix Multiple Image Upload for Trending, Explore, and Product
 
 ## Tasks
-- [x] Update error messages in uploadController.js from "Invalid Product ID format" to "Invalid ID format" in all occurrences (validation checks and catch blocks for CastError)
+- [ ] Update `controllers/trendingController.js` to handle multiple images
+- [ ] Update `controllers/exploreController.js` to handle multiple images
+- [ ] Update `controllers/productController.js` to handle multiple images (if needed)
+- [ ] Update `routes/trending.js` to use `upload.array('images', 10)` and update Swagger
+- [ ] Update `routes/explore.js` to use `upload.array('images', 10)` and update Swagger
+- [ ] Update `routes/products.js` to use `upload.array('images', 10)` and update Swagger
+
+## Followup
+- [ ] Test multiple image uploads for trending, explore, and product
+- [ ] Verify images are stored correctly in database
