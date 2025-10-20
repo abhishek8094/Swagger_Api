@@ -24,7 +24,6 @@ app.use(cors({
   origin: '*',
   credentials: true
 }));
-
 // Swagger configuration
 const swaggerOptions = {
   definition: {
