@@ -1,6 +1,6 @@
 const express = require('express');
 const multer = require('multer');
-const { uploadMultipleImages, deleteMultipleImages } = require('../controllers/uploadController');
+const { uploadMultipleImages, deleteMultipleImages, deleteImagesByIndex } = require('../controllers/uploadController');
 
 const router = express.Router();
 
@@ -98,8 +98,8 @@ router.post('/:productId', upload.array('images', 10), uploadMultipleImages);
 
 /**
  * @swagger
- * /api/upload-images/{productId}:
- *   delete:
+ * /api/upload-images/{productId}/delete:
+ *   post:
  *     summary: Delete specific images from a product or accessory
  *     tags: [Upload]
  *     parameters:
@@ -159,6 +159,72 @@ router.post('/:productId', upload.array('images', 10), uploadMultipleImages);
  *             schema:
  *               $ref: '#/components/schemas/Error'
  */
-router.delete('/:productId', deleteMultipleImages);
+router.post('/:productId/delete', deleteMultipleImages);
+
+/**
+ * @swagger
+ * /api/upload-images/{productId}/delete-by-index:
+ *   post:
+ *     summary: Delete images by index from a product or accessory
+ *     tags: [Upload]
+ *     parameters:
+ *       - in: path
+ *         name: productId
+ *         schema:
+ *           type: string
+ *         required: true
+ *         description: The product or accessory ID
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required:
+ *               - indices
+ *             properties:
+ *               indices:
+ *                 type: array
+ *                 items:
+ *                   type: integer
+ *                   minimum: 0
+ *                 description: Array of unique indices to delete (0-based)
+ *             example:
+ *               indices: [0, 2, 4]
+ *     responses:
+ *       200:
+ *         description: Images deleted successfully
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 success:
+ *                   type: boolean
+ *                 message:
+ *                   type: string
+ *                 data:
+ *                   type: object
+ *                   properties:
+ *                     id:
+ *                       type: string
+ *                     images:
+ *                       type: array
+ *                       items:
+ *                         type: string
+ *       400:
+ *         description: Bad request
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/Error'
+ *       404:
+ *         description: Product or Accessory not found
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/Error'
+ */
+router.post('/:productId/delete-by-index', deleteImagesByIndex);
 
 module.exports = router;
