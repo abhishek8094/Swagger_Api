@@ -3,6 +3,7 @@ const Product = require('../models/Product');
 const Accessory = require('../models/Accessory');
 const cloudinary = require('../config/cloudinary');
 const crypto = require('crypto');
+const mongoose = require('mongoose');
 
 // Helper function to extract public_id from Cloudinary URL
 const getPublicIdFromUrl = (url) => {
@@ -20,6 +21,13 @@ exports.uploadMultipleImages = async (req, res, next) => {
     // Validate required fields
     if (!productId) {
       const error = new Error('Product ID is required');
+      error.statusCode = 400;
+      return next(error);
+    }
+
+    // Validate productId is a valid ObjectId
+    if (!mongoose.Types.ObjectId.isValid(productId)) {
+      const error = new Error('Invalid Product ID format');
       error.statusCode = 400;
       return next(error);
     }
@@ -98,6 +106,13 @@ exports.deleteMultipleImages = async (req, res, next) => {
       return next(error);
     }
 
+    // Validate productId is a valid ObjectId
+    if (!mongoose.Types.ObjectId.isValid(productId)) {
+      const error = new Error('Invalid Product ID format');
+      error.statusCode = 400;
+      return next(error);
+    }
+
     if (!imageIds || !Array.isArray(imageIds) || imageIds.length === 0) {
       const error = new Error('Please provide an array of image IDs to delete');
       error.statusCode = 400;
@@ -168,6 +183,13 @@ exports.deleteImagesByIndex = async (req, res, next) => {
 
     if (!productId) {
       const error = new Error('Product ID is required');
+      error.statusCode = 400;
+      return next(error);
+    }
+
+    // Validate productId is a valid ObjectId
+    if (!mongoose.Types.ObjectId.isValid(productId)) {
+      const error = new Error('Invalid Product ID format');
       error.statusCode = 400;
       return next(error);
     }
