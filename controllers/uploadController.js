@@ -1,3 +1,4 @@
+
 const Product = require('../models/Product');
 const Accessory = require('../models/Accessory');
 const cloudinary = require('../config/cloudinary');
@@ -125,12 +126,13 @@ exports.deleteMultipleImages = async (req, res, next) => {
       error.statusCode = 404;
       return next(error);
     }
-
     // Delete images from Cloudinary
     const deletePromises = imagesToDelete.map(async (img) => {
-      const publicId = getPublicIdFromUrl(img.url);
-      if (publicId) {
-        await cloudinary.uploader.destroy(publicId);
+      if (img && img.url) {
+        const publicId = getPublicIdFromUrl(img.url);
+        if (publicId) {
+          await cloudinary.uploader.destroy(publicId);
+        }
       }
     });
     await Promise.all(deletePromises);
@@ -225,9 +227,11 @@ exports.deleteImagesByIndex = async (req, res, next) => {
 
     // Delete images from Cloudinary
     const deletePromises = imagesToDelete.map(async (img) => {
-      const publicId = getPublicIdFromUrl(img.url);
-      if (publicId) {
-        await cloudinary.uploader.destroy(publicId);
+      if (img && img.url) {
+        const publicId = getPublicIdFromUrl(img.url);
+        if (publicId) {
+          await cloudinary.uploader.destroy(publicId);
+        }
       }
     });
     await Promise.all(deletePromises);
