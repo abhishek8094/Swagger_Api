@@ -56,10 +56,18 @@ exports.uploadMultipleImages = async (req, res, next) => {
 
     // Upload images to Cloudinary
     const uploadedImages = [];
+    let folder = 'products';
+    if (isProduct) {
+      if (item.isExplore) folder = 'explore';
+      else if (item.isTrending) folder = 'trending';
+    } else {
+      folder = 'accessories';
+    }
+
     for (const file of req.files) {
       const imageResult = await new Promise((resolve, reject) => {
         const uploadStream = cloudinary.uploader.upload_stream(
-          { folder: isProduct ? 'products' : 'accessories' },
+          { folder: folder },
           (error, result) => {
             if (error) reject(error);
             else resolve(result);
@@ -67,8 +75,12 @@ exports.uploadMultipleImages = async (req, res, next) => {
         );
         uploadStream.end(file.buffer);
       });
-      const imageId = crypto.randomUUID();
-      uploadedImages.push({ id: imageId, url: imageResult.secure_url });
+      if (isProduct) {
+        const imageId = crypto.randomUUID();
+        uploadedImages.push({ id: imageId, url: imageResult.secure_url });
+      } else {
+        uploadedImages.push(imageResult.secure_url);
+      }
     }
 
     // Update the item's images array
@@ -87,6 +99,11 @@ exports.uploadMultipleImages = async (req, res, next) => {
       }
     });
   } catch (error) {
+    if (error.name === 'CastError') {
+      const newError = new Error('Invalid Product ID format');
+      newError.statusCode = 400;
+      return next(newError);
+    }
     error.statusCode = 400;
     next(error);
   }
@@ -168,6 +185,11 @@ exports.deleteMultipleImages = async (req, res, next) => {
       }
     });
   } catch (error) {
+    if (error.name === 'CastError') {
+      const newError = new Error('Invalid Product ID format');
+      newError.statusCode = 400;
+      return next(newError);
+    }
     error.statusCode = 400;
     next(error);
   }
@@ -275,6 +297,11 @@ exports.deleteImagesByIndex = async (req, res, next) => {
       }
     });
   } catch (error) {
+    if (error.name === 'CastError') {
+      const newError = new Error('Invalid Product ID format');
+      newError.statusCode = 400;
+      return next(newError);
+    }
     error.statusCode = 400;
     next(error);
   }
