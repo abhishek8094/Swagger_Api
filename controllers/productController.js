@@ -4,6 +4,7 @@ const path = require('path');
 const fs = require('fs');
 const crypto = require('crypto');
 const cloudinary = require('../config/cloudinary');
+const mongoose = require('mongoose');
 
 // Helper function to extract public_id from Cloudinary URL
 const getPublicIdFromUrl = (url) => {
@@ -11,11 +12,13 @@ const getPublicIdFromUrl = (url) => {
   return match ? match[1] : null;
 };
 
-// Helper function to transform product images from string to array of strings
+// Helper function to ensure images is an array of strings
 const transformProductImages = (productObj) => {
-  if (productObj.images && typeof productObj.images === 'string' && productObj.images.trim() !== '') {
-    const imageUrls = productObj.images.split(', ');
-    return imageUrls.map(url => url.trim());
+  if (Array.isArray(productObj.images)) {
+    return productObj.images;
+  } else if (typeof productObj.images === 'string' && productObj.images.trim() !== '') {
+    // Backward compatibility: split string into array
+    return productObj.images.split(', ').map(url => url.trim());
   } else {
     return [];
   }
@@ -129,7 +132,7 @@ exports.createProduct = async (req, res, next) => {
       price: parseFloat(price),
       size,
       category: category.trim(),
-      images: imageUrls.join(', '),
+      images: imageUrls,
       isExplore: isExplore || false
     });
     // Images are already full Cloudinary URLs
@@ -205,7 +208,15 @@ exports.updateProduct = async (req, res, next) => {
 
       // Delete old images from Cloudinary
       const oldProduct = await Product.findById(req.params.id);
-      if (oldProduct && oldProduct.images && oldProduct.images.trim() !== '') {
+      if (oldProduct && oldProduct.images && Array.isArray(oldProduct.images)) {
+        for (const oldImageUrl of oldProduct.images) {
+          const oldPublicId = getPublicIdFromUrl(oldImageUrl);
+          if (oldPublicId) {
+            await cloudinary.uploader.destroy(oldPublicId);
+          }
+        }
+      } else if (oldProduct && oldProduct.images && typeof oldProduct.images === 'string' && oldProduct.images.trim() !== '') {
+        // Backward compatibility
         const oldImageUrls = oldProduct.images.split(', ');
         for (const oldImageUrl of oldImageUrls) {
           const oldPublicId = getPublicIdFromUrl(oldImageUrl.trim());
@@ -215,7 +226,7 @@ exports.updateProduct = async (req, res, next) => {
         }
       }
 
-      updateData.images = newImageUrls.join(', ');
+      updateData.images = newImageUrls;
     }
 
     const product = await Product.findByIdAndUpdate(
@@ -252,6 +263,13 @@ exports.updateProduct = async (req, res, next) => {
 // @access  Public
 exports.deleteProduct = async (req, res, next) => {
   try {
+    // Validate ID format
+    if (!mongoose.Types.ObjectId.isValid(req.params.id)) {
+      const error = new Error('Invalid ID format');
+      error.statusCode = 400;
+      return next(error);
+    }
+
     const product = await Product.findById(req.params.id);
 
     if (!product) {
@@ -261,12 +279,22 @@ exports.deleteProduct = async (req, res, next) => {
     }
 
     // Delete images from Cloudinary
-    if (product.images && product.images.trim() !== '') {
-      const imageUrls = product.images.split(', ');
-      for (const imageUrl of imageUrls) {
-        const publicId = getPublicIdFromUrl(imageUrl.trim());
-        if (publicId) {
-          await cloudinary.uploader.destroy(publicId);
+    if (product.images) {
+      if (Array.isArray(product.images)) {
+        for (const imageUrl of product.images) {
+          const publicId = getPublicIdFromUrl(imageUrl);
+          if (publicId) {
+            await cloudinary.uploader.destroy(publicId);
+          }
+        }
+      } else if (typeof product.images === 'string' && product.images.trim() !== '') {
+        // Backward compatibility
+        const imageUrls = product.images.split(', ');
+        for (const imageUrl of imageUrls) {
+          const publicId = getPublicIdFromUrl(imageUrl.trim());
+          if (publicId) {
+            await cloudinary.uploader.destroy(publicId);
+          }
         }
       }
     }
