@@ -49,7 +49,12 @@ exports.getTrendingProducts = async (req, res, next) => {
 // Helper function to ensure images is an array of strings
 const transformProductImages = (productObj) => {
   if (Array.isArray(productObj.images)) {
-    return productObj.images;
+    // Check if images are objects {id, url}
+    if (productObj.images.length > 0 && typeof productObj.images[0] === 'object' && productObj.images[0].url) {
+      return productObj.images.map(img => img.url);
+    } else {
+      return productObj.images;
+    }
   } else if (typeof productObj.images === 'string' && productObj.images.trim() !== '') {
     // Backward compatibility: split string into array
     return productObj.images.split(', ').map(url => url.trim());

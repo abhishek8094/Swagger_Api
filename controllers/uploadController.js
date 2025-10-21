@@ -26,6 +26,7 @@ exports.uploadMultipleImages = async (req, res, next) => {
 
     // Validate productId is a valid ObjectId
     if (!mongoose.Types.ObjectId.isValid(productId)) {
+      console.error(`Invalid ID format: ${productId}`);
       const error = new Error('Invalid ID format');
       error.statusCode = 400;
       return next(error);
@@ -78,7 +79,8 @@ exports.uploadMultipleImages = async (req, res, next) => {
         const imageId = crypto.randomUUID();
         uploadedImages.push({ id: imageId, url: imageResult.secure_url });
       } else {
-        uploadedImages.push(imageResult.secure_url);
+        const imageId = crypto.randomUUID();
+        uploadedImages.push({ id: imageId, url: imageResult.secure_url });
       }
     }
 
