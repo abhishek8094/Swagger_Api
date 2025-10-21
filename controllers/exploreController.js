@@ -10,6 +10,23 @@ const getPublicIdFromUrl = (url) => {
   return match ? match[1] : null;
 };
 
+// Helper function to ensure images is an array of strings
+const transformProductImages = (productObj) => {
+  if (Array.isArray(productObj.images)) {
+    // Check if images are objects {id, url}
+    if (productObj.images.length > 0 && typeof productObj.images[0] === 'object' && productObj.images[0].url) {
+      return productObj.images.map(img => img.url);
+    } else {
+      return productObj.images;
+    }
+  } else if (typeof productObj.images === 'string' && productObj.images.trim() !== '') {
+    // Backward compatibility: split string into array
+    return productObj.images.split(', ').map(url => url.trim());
+  } else {
+    return [];
+  }
+};
+
 // @desc    Get explore collection
 // @route   GET /api/explore
 // @access  Public
@@ -39,7 +56,7 @@ exports.getExploreCollection = async (req, res, next) => {
           title: product.name,
           price: product.price,
           image: product.image,
-          images: product.images.map(img => img.url),
+          images: transformProductImages(product),
           category: product.category
         });
       }
