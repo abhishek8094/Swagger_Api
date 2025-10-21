@@ -9,6 +9,23 @@ const getPublicIdFromUrl = (url) => {
   return match ? match[1] : null;
 };
 
+// Helper function to ensure images is an array of strings
+const transformProductImages = (productObj) => {
+  if (Array.isArray(productObj.images)) {
+    // Check if images are objects {id, url}
+    if (productObj.images.length > 0 && typeof productObj.images[0] === 'object' && productObj.images[0].url) {
+      return productObj.images.map(img => img.url);
+    } else {
+      return productObj.images;
+    }
+  } else if (typeof productObj.images === 'string' && productObj.images.trim() !== '') {
+    // Backward compatibility: split string into array
+    return productObj.images.split(', ').map(url => url.trim());
+  } else {
+    return [];
+  }
+};
+
 // @desc    Get all accessories
 // @route   GET /api/accessories
 // @access  Public
@@ -16,8 +33,12 @@ exports.getAccessories = async (req, res, next) => {
   try {
     const accessories = await Accessory.find().sort({ createdAt: -1 });
 
-    // Images are already arrays
-    const accessoriesWithImagesArray = accessories.map(accessory => accessory.toObject());
+    // Transform images to ensure array of strings
+    const accessoriesWithImagesArray = accessories.map(accessory => {
+      const accessoryObj = accessory.toObject();
+      accessoryObj.images = transformProductImages(accessoryObj);
+      return accessoryObj;
+    });
 
     res.status(200).json({
       success: true,
@@ -43,8 +64,9 @@ exports.getAccessory = async (req, res, next) => {
       return next(error);
     }
 
-    // Images are already arrays
+    // Transform images to ensure array of strings
     const accessoryWithImagesArray = accessory.toObject();
+    accessoryWithImagesArray.images = transformProductImages(accessoryWithImagesArray);
 
     res.status(200).json({
       success: true,
@@ -78,7 +100,7 @@ exports.createAccessory = async (req, res, next) => {
     }
 
     // Upload images to Cloudinary
-    const imageUrls = [];
+    const imageObjects = [];
     for (const file of req.files.images) {
       const imageResult = await new Promise((resolve, reject) => {
         const uploadStream = cloudinary.uploader.upload_stream(
@@ -90,13 +112,14 @@ exports.createAccessory = async (req, res, next) => {
         );
         uploadStream.end(file.buffer);
       });
-      imageUrls.push(imageResult.secure_url);
+      const imageId = crypto.randomUUID();
+      imageObjects.push({ id: imageId, url: imageResult.secure_url });
     }
 
     const accessory = await Accessory.create({
       name,
       price: parseFloat(price),
-      images: imageUrls
+      images: imageObjects
     });
 
     res.status(201).json({
