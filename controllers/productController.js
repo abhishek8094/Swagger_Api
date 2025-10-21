@@ -2,12 +2,23 @@ const Product = require('../models/Product');
 const Accessory = require('../models/Accessory');
 const path = require('path');
 const fs = require('fs');
+const crypto = require('crypto');
 const cloudinary = require('../config/cloudinary');
 
 // Helper function to extract public_id from Cloudinary URL
 const getPublicIdFromUrl = (url) => {
   const match = url.match(/\/upload\/(?:v\d+\/)?(.+)\.[a-zA-Z]+$/);
   return match ? match[1] : null;
+};
+
+// Helper function to transform product images from string to array of strings
+const transformProductImages = (productObj) => {
+  if (productObj.images && typeof productObj.images === 'string' && productObj.images.trim() !== '') {
+    const imageUrls = productObj.images.split(', ');
+    return imageUrls.map(url => url.trim());
+  } else {
+    return [];
+  }
 };
 
 // @desc    Get all products for carousel
@@ -17,8 +28,12 @@ exports.getProducts = async (req, res, next) => {
   try {
     const products = await Product.find().sort({ createdAt: -1 });
 
-    // Images are already full Cloudinary URLs
-    const productsWithFullImage = products.map(product => product.toObject());
+    // Transform images from string to array of strings
+    const productsWithFullImage = products.map(product => {
+      const productObj = product.toObject();
+      productObj.images = transformProductImages(productObj);
+      return productObj;
+    });
 
     res.status(200).json({
       success: true,
@@ -50,8 +65,9 @@ exports.getProduct = async (req, res, next) => {
       return next(error);
     }
 
-    // Images are already full Cloudinary URLs
+    // Transform images from string to array of strings
     const itemObj = item.toObject();
+    itemObj.images = transformProductImages(itemObj);
 
     res.status(200).json({
       success: true,
@@ -113,7 +129,7 @@ exports.createProduct = async (req, res, next) => {
       price: parseFloat(price),
       size,
       category: category.trim(),
-      images: imageUrls,
+      images: imageUrls.join(', '),
       isExplore: isExplore || false
     });
     // Images are already full Cloudinary URLs
@@ -126,7 +142,7 @@ exports.createProduct = async (req, res, next) => {
       description: productObj.description,
       price: productObj.price,
       size: productObj.size,
-      images: productObj.images,
+      images: transformProductImages(productObj),
       createdAt: productObj.createdAt
     };
 
@@ -189,16 +205,17 @@ exports.updateProduct = async (req, res, next) => {
 
       // Delete old images from Cloudinary
       const oldProduct = await Product.findById(req.params.id);
-      if (oldProduct && oldProduct.images && oldProduct.images.length > 0) {
-        for (const oldImageUrl of oldProduct.images) {
-          const oldPublicId = getPublicIdFromUrl(oldImageUrl);
+      if (oldProduct && oldProduct.images && oldProduct.images.trim() !== '') {
+        const oldImageUrls = oldProduct.images.split(', ');
+        for (const oldImageUrl of oldImageUrls) {
+          const oldPublicId = getPublicIdFromUrl(oldImageUrl.trim());
           if (oldPublicId) {
             await cloudinary.uploader.destroy(oldPublicId);
           }
         }
       }
 
-      updateData.images = newImageUrls;
+      updateData.images = newImageUrls.join(', ');
     }
 
     const product = await Product.findByIdAndUpdate(
@@ -216,8 +233,9 @@ exports.updateProduct = async (req, res, next) => {
       return next(error);
     }
 
-    // Images are already full Cloudinary URLs
+    // Transform images from string to array of strings
     const productObj = product.toObject();
+    productObj.images = transformProductImages(productObj);
 
     res.status(200).json({
       success: true,
@@ -243,9 +261,10 @@ exports.deleteProduct = async (req, res, next) => {
     }
 
     // Delete images from Cloudinary
-    if (product.images && product.images.length > 0) {
-      for (const imageUrl of product.images) {
-        const publicId = getPublicIdFromUrl(imageUrl);
+    if (product.images && product.images.trim() !== '') {
+      const imageUrls = product.images.split(', ');
+      for (const imageUrl of imageUrls) {
+        const publicId = getPublicIdFromUrl(imageUrl.trim());
         if (publicId) {
           await cloudinary.uploader.destroy(publicId);
         }
