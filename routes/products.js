@@ -224,7 +224,7 @@ router.get('/:id', getProduct);
  *               - name
  *               - price
  *               - size
- *               - image
+ *               - images
  *               - category
  *             properties:
  *               name:
@@ -242,10 +242,12 @@ router.get('/:id', getProduct);
  *               category:
  *                 type: string
  *                 description: Product category
- *               image:
- *                 type: string
- *                 format: binary
- *                 description: Product image file
+ *               images:
+ *                 type: array
+ *                 items:
+ *                   type: string
+ *                   format: binary
+ *                 description: Product image files (at least one required)
  *     responses:
  *       201:
  *         description: Product created successfully
@@ -265,7 +267,7 @@ router.get('/:id', getProduct);
  *             schema:
  *               $ref: '#/components/schemas/Error'
  */
-router.post('/', upload.single('image'), createProduct);
+router.post('/', upload.array('images'), createProduct);
 
 
 
