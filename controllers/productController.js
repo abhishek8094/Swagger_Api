@@ -87,12 +87,12 @@ exports.getProduct = async (req, res, next) => {
   }
 };
 
-// @desc    Create new product with image upload
+// @desc    Create new product
 // @route   POST /api/products
 // @access  Public
 exports.createProduct = async (req, res, next) => {
   try {
-    const { name, description, price, category, isExplore, size, offerStrip } = req.body;
+    const { name, description, price, category, isExplore, size, offerStrip, image } = req.body;
 
     // Validate required fields
     if (!size) {
@@ -108,29 +108,16 @@ exports.createProduct = async (req, res, next) => {
       return next(error);
     }
 
-    // Check if files were uploaded
-    if (!req.files || !req.files.images || req.files.images.length === 0) {
-      const error = new Error('Please upload at least one image');
+    // Validate image URL
+    if (!image || typeof image !== 'string' || image.trim() === '') {
+      const error = new Error('Please provide a valid image URL');
       error.statusCode = 400;
       return next(error);
     }
 
-    // Upload images to Cloudinary
-    const imageObjects = [];
-    for (const file of req.files.images) {
-      const imageResult = await new Promise((resolve, reject) => {
-        const uploadStream = cloudinary.uploader.upload_stream(
-          { folder: 'products' },
-          (error, result) => {
-            if (error) reject(error);
-            else resolve(result);
-          }
-        );
-        uploadStream.end(file.buffer);
-      });
-      const imageId = crypto.randomUUID();
-      imageObjects.push({ id: imageId, url: imageResult.secure_url });
-    }
+    // Create image object
+    const imageId = crypto.randomUUID();
+    const imageObjects = [{ id: imageId, url: image.trim() }];
 
     const product = await Product.create({
       name,
@@ -139,26 +126,16 @@ exports.createProduct = async (req, res, next) => {
       size,
       category: category.trim(),
       images: imageObjects,
-      image: imageObjects[0].url, // Set main image to first image
+      image: image.trim(), // Set main image to provided URL
       isExplore: isExplore || false
     });
-    // Images are already full Cloudinary URLs
+    // Images are already full URLs
     const productObj = product.toObject();
-
-    // Transform to match the example response
-    const transformedData = {
-      id: productObj._id,
-      name: productObj.name,
-      description: productObj.description,
-      price: productObj.price,
-      size: productObj.size,
-      images: transformProductImages(productObj),
-      createdAt: productObj.createdAt
-    };
+    productObj.images = transformProductImages(productObj);
 
     res.status(201).json({
       success: true,
-      data: transformedData
+      data: productObj
     });
   } catch (error) {
     error.statusCode = 400;
