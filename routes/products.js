@@ -7,9 +7,6 @@ const {
   createProduct,
   updateProduct,
   deleteProduct,
-  getExploreCollection,
-  getTrendingProducts,
-  createExploreProduct,
   searchProducts,
   createOfferStrip,
   updateOfferStrip,
@@ -212,12 +209,12 @@ router.get('/:id', getProduct);
  * @swagger
  * /api/products:
  *   post:
- *     summary: Create new product
+ *     summary: Create new product with image upload
  *     tags: [Products]
  *     requestBody:
  *       required: true
  *       content:
- *         application/json:
+ *         multipart/form-data:
  *           schema:
  *             type: object
  *             required:
@@ -244,7 +241,8 @@ router.get('/:id', getProduct);
  *                 description: Product category
  *               image:
  *                 type: string
- *                 description: Product image URL
+ *                 format: binary
+ *                 description: Product image file (required)
  *     responses:
  *       201:
  *         description: Product created successfully
@@ -264,7 +262,7 @@ router.get('/:id', getProduct);
  *             schema:
  *               $ref: '#/components/schemas/Error'
  */
-router.post('/', createProduct);
+router.post('/', upload.single('image'), createProduct);
 
 
 
@@ -326,7 +324,7 @@ router.post('/', createProduct);
  *             schema:
  *               $ref: '#/components/schemas/Error'
  */
-router.post('/update/:id', upload.single('image'), updateProduct);
+router.post('/update/:id', upload.array('images'), updateProduct);
 
 /**
  * @swagger

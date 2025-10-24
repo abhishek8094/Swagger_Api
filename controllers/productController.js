@@ -87,12 +87,12 @@ exports.getProduct = async (req, res, next) => {
   }
 };
 
-// @desc    Create new product
+// @desc    Create new product with image upload
 // @route   POST /api/products
 // @access  Public
 exports.createProduct = async (req, res, next) => {
   try {
-    const { name, description, price, category, isExplore, size, offerStrip, image } = req.body;
+    const { name, description, price, category, isExplore, size, offerStrip } = req.body;
 
     // Validate required fields
     if (!size) {
@@ -108,16 +108,26 @@ exports.createProduct = async (req, res, next) => {
       return next(error);
     }
 
-    // Validate image URL
-    if (!image || typeof image !== 'string' || image.trim() === '') {
-      const error = new Error('Please provide a valid image URL');
+    // Check if file was uploaded
+    if (!req.file) {
+      const error = new Error('Please upload an image');
       error.statusCode = 400;
       return next(error);
     }
 
-    // Create image object
+    // Upload image to Cloudinary
+    const imageResult = await new Promise((resolve, reject) => {
+      const uploadStream = cloudinary.uploader.upload_stream(
+        { folder: 'products' },
+        (error, result) => {
+          if (error) reject(error);
+          else resolve(result);
+        }
+      );
+      uploadStream.end(req.file.buffer);
+    });
     const imageId = crypto.randomUUID();
-    const imageObjects = [{ id: imageId, url: image.trim() }];
+    const imageObject = { id: imageId, url: imageResult.secure_url };
 
     const product = await Product.create({
       name,
@@ -125,11 +135,11 @@ exports.createProduct = async (req, res, next) => {
       price: parseFloat(price),
       size,
       category: category.trim(),
-      images: imageObjects,
-      image: image.trim(), // Set main image to provided URL
+      images: [imageObject],
+      image: imageObject.url, // Set main image
       isExplore: isExplore || false
     });
-    // Images are already full URLs
+    // Images are already full Cloudinary URLs
     const productObj = product.toObject();
     productObj.images = transformProductImages(productObj);
 
