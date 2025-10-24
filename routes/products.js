@@ -212,19 +212,19 @@ router.get('/:id', getProduct);
  * @swagger
  * /api/products:
  *   post:
- *     summary: Create new product with image upload
+ *     summary: Create new product
  *     tags: [Products]
  *     requestBody:
  *       required: true
  *       content:
- *         multipart/form-data:
+ *         application/json:
  *           schema:
  *             type: object
  *             required:
  *               - name
  *               - price
  *               - size
- *               - images
+ *               - image
  *               - category
  *             properties:
  *               name:
@@ -242,12 +242,9 @@ router.get('/:id', getProduct);
  *               category:
  *                 type: string
  *                 description: Product category
- *               images:
- *                 type: array
- *                 items:
- *                   type: string
- *                   format: binary
- *                 description: Product image files (at least one required)
+ *               image:
+ *                 type: string
+ *                 description: Product image URL
  *     responses:
  *       201:
  *         description: Product created successfully
@@ -267,7 +264,7 @@ router.get('/:id', getProduct);
  *             schema:
  *               $ref: '#/components/schemas/Error'
  */
-router.post('/', upload.array('images'), createProduct);
+router.post('/', createProduct);
 
 
 
