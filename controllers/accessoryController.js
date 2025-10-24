@@ -1,6 +1,7 @@
 const Accessory = require('../models/Accessory');
 const path = require('path');
 const fs = require('fs');
+const crypto = require('crypto');
 const cloudinary = require('../config/cloudinary');
 
 // Helper function to extract public_id from Cloudinary URL
@@ -92,28 +93,30 @@ exports.createAccessory = async (req, res, next) => {
       return next(error);
     }
 
-    // Check if files were uploaded
+    // Validate that at least one image is uploaded
     if (!req.files || !req.files.images || req.files.images.length === 0) {
       const error = new Error('Please upload at least one image');
       error.statusCode = 400;
       return next(error);
     }
 
-    // Upload images to Cloudinary
+    // Upload images to Cloudinary if provided
     const imageObjects = [];
-    for (const file of req.files.images) {
-      const imageResult = await new Promise((resolve, reject) => {
-        const uploadStream = cloudinary.uploader.upload_stream(
-          { folder: 'accessories' },
-          (error, result) => {
-            if (error) reject(error);
-            else resolve(result);
-          }
-        );
-        uploadStream.end(file.buffer);
-      });
-      const imageId = crypto.randomUUID();
-      imageObjects.push({ id: imageId, url: imageResult.secure_url });
+    if (req.files && req.files.images && req.files.images.length > 0) {
+      for (const file of req.files.images) {
+        const imageResult = await new Promise((resolve, reject) => {
+          const uploadStream = cloudinary.uploader.upload_stream(
+            { folder: 'accessories' },
+            (error, result) => {
+              if (error) reject(error);
+              else resolve(result);
+            }
+          );
+          uploadStream.end(file.buffer);
+        });
+        const imageId = crypto.randomUUID();
+        imageObjects.push({ id: imageId, url: imageResult.secure_url });
+      }
     }
 
     const accessory = await Accessory.create({

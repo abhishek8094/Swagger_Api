@@ -104,7 +104,7 @@ exports.createExploreProduct = async (req, res, next) => {
     const { name, description, price, category, size } = req.body;
 
     // Check if files were uploaded
-    if (!req.files || !req.files.images || req.files.images.length === 0) {
+    if (!req.files || !req.files.image || req.files.image.length === 0) {
       const error = new Error('Please upload at least one image');
       error.statusCode = 400;
       return next(error);
@@ -112,7 +112,7 @@ exports.createExploreProduct = async (req, res, next) => {
 
     // Upload images to Cloudinary
     const imageObjects = [];
-    for (const file of req.files.images) {
+    for (const file of req.files.image) {
       const imageResult = await new Promise((resolve, reject) => {
         const uploadStream = cloudinary.uploader.upload_stream(
           { folder: 'explore' },
@@ -181,10 +181,10 @@ exports.updateExploreProduct = async (req, res, next) => {
     };
 
     // If new images uploaded, update images
-    if (req.files && req.files.images && req.files.images.length > 0) {
+    if (req.files && req.files.image && req.files.image.length > 0) {
       // Upload new images to Cloudinary
       const newImageObjects = [];
-      for (const file of req.files.images) {
+      for (const file of req.files.image) {
         const imageResult = await new Promise((resolve, reject) => {
           const uploadStream = cloudinary.uploader.upload_stream(
             { folder: 'explore' },
