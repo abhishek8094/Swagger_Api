@@ -12,15 +12,12 @@ const accessorySchema = new mongoose.Schema({
     required: [true, 'Please add a price'],
     min: [0, 'Price cannot be negative']
   },
+  image: {
+    type: String,
+    required: [true, 'Please add an image']
+  },
   images: [{
-    id: {
-      type: String,
-      required: true
-    },
-    url: {
-      type: String,
-      required: true
-    }
+    type: String
   }],
   createdAt: {
     type: Date,
