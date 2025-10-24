@@ -13,15 +13,7 @@ const getPublicIdFromUrl = (url) => {
 // Helper function to ensure images is an array of strings
 const transformProductImages = (productObj) => {
   if (Array.isArray(productObj.images)) {
-    // Check if images are objects {id, url}
-    if (productObj.images.length > 0 && typeof productObj.images[0] === 'object' && productObj.images[0].url) {
-      return productObj.images.map(img => img.url);
-    } else {
-      return productObj.images;
-    }
-  } else if (typeof productObj.images === 'string' && productObj.images.trim() !== '') {
-    // Backward compatibility: split string into array
-    return productObj.images.split(', ').map(url => url.trim());
+    return productObj.images;
   } else {
     return [];
   }
@@ -101,7 +93,7 @@ exports.createAccessory = async (req, res, next) => {
     }
 
     // Upload images to Cloudinary if provided
-    const imageObjects = [];
+    let imageUrls = [];
     if (req.files && req.files.images && req.files.images.length > 0) {
       for (const file of req.files.images) {
         const imageResult = await new Promise((resolve, reject) => {
@@ -114,15 +106,15 @@ exports.createAccessory = async (req, res, next) => {
           );
           uploadStream.end(file.buffer);
         });
-        const imageId = crypto.randomUUID();
-        imageObjects.push({ id: imageId, url: imageResult.secure_url });
+        imageUrls.push(imageResult.secure_url);
       }
     }
 
     const accessory = await Accessory.create({
       name,
       price: parseFloat(price),
-      images: imageObjects
+      image: imageUrls[0], // First image as main image
+      images: imageUrls.slice(1) // Rest as additional images
     });
 
     res.status(201).json({
@@ -147,7 +139,7 @@ exports.updateAccessory = async (req, res, next) => {
       price: parseFloat(price)
     };
 
-    // If new images uploaded, update images
+    // If new images uploaded, update image and images
     if (req.files && req.files.images && req.files.images.length > 0) {
       // Upload new images to Cloudinary
       const newImageUrls = [];
@@ -167,16 +159,27 @@ exports.updateAccessory = async (req, res, next) => {
 
       // Delete old images from Cloudinary
       const oldAccessory = await Accessory.findById(req.params.id);
-      if (oldAccessory && oldAccessory.images && oldAccessory.images.length > 0) {
-        for (const oldImageUrl of oldAccessory.images) {
-          const oldPublicId = getPublicIdFromUrl(oldImageUrl);
+      if (oldAccessory) {
+        // Delete main image
+        if (oldAccessory.image) {
+          const oldPublicId = getPublicIdFromUrl(oldAccessory.image);
           if (oldPublicId) {
             await cloudinary.uploader.destroy(oldPublicId);
           }
         }
+        // Delete additional images
+        if (oldAccessory.images && oldAccessory.images.length > 0) {
+          for (const oldImageUrl of oldAccessory.images) {
+            const oldPublicId = getPublicIdFromUrl(oldImageUrl);
+            if (oldPublicId) {
+              await cloudinary.uploader.destroy(oldPublicId);
+            }
+          }
+        }
       }
 
-      updateData.images = newImageUrls;
+      updateData.image = newImageUrls[0];
+      updateData.images = newImageUrls.slice(1);
     }
 
     const accessory = await Accessory.findByIdAndUpdate(
@@ -218,6 +221,12 @@ exports.deleteAccessory = async (req, res, next) => {
     }
 
     // Delete images from Cloudinary
+    if (accessory.image) {
+      const publicId = getPublicIdFromUrl(accessory.image);
+      if (publicId) {
+        await cloudinary.uploader.destroy(publicId);
+      }
+    }
     if (accessory.images && accessory.images.length > 0) {
       for (const imageUrl of accessory.images) {
         const publicId = getPublicIdFromUrl(imageUrl);
