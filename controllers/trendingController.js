@@ -133,7 +133,7 @@ exports.createTrendingProduct = async (req, res, next) => {
       price: parseFloat(price),
       size,
       category,
-      images: imageUrls,
+      images: [],
       image: imageUrls[0], // Set main image to first image
       subImg: imageUrls[1] || null, // Set subImg to second image if exists
       isTrending: true
