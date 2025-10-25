@@ -8,12 +8,23 @@ const cloudinary = require('../config/cloudinary');
 const getPublicIdFromUrl = (url) => {
   const match = url.match(/\/upload\/(?:v\d+\/)?(.+)\.[a-zA-Z]+$/);
   return match ? match[1] : null;
-};
+};  
 
-// Helper function to ensure images is an array of strings
+// Helper function to ensure images is an array of objects {id, url}
 const transformProductImages = (productObj) => {
   if (Array.isArray(productObj.images)) {
-    return productObj.images;
+    // If already objects, return as is
+    if (productObj.images.length > 0 && typeof productObj.images[0] === 'object' && productObj.images[0].id && productObj.images[0].url) {
+      return productObj.images;
+    } else if (productObj.images.length > 0 && typeof productObj.images[0] === 'string') {
+      // Backward compatibility: convert strings to objects
+      return productObj.images.map(url => ({ id: crypto.randomUUID(), url }));
+    } else {
+      return productObj.images;
+    }
+  } else if (typeof productObj.images === 'string' && productObj.images.trim() !== '') {
+    // Backward compatibility: split string into array of objects
+    return productObj.images.split(', ').map(url => ({ id: crypto.randomUUID(), url: url.trim() }));
   } else {
     return [];
   }
@@ -110,11 +121,14 @@ exports.createAccessory = async (req, res, next) => {
       }
     }
 
+    // Create image objects for the accessory
+    const imageObjects = imageUrls.map(url => ({ id: crypto.randomUUID(), url }));
+
     const accessory = await Accessory.create({
       name,
       price: parseFloat(price),
       image: imageUrls[0], // First image as main image
-      images: [] // Rest as additional images
+      images: [] // Set images to empty array
     });
 
     res.status(201).json({
@@ -169,8 +183,8 @@ exports.updateAccessory = async (req, res, next) => {
         }
         // Delete additional images
         if (oldAccessory.images && oldAccessory.images.length > 0) {
-          for (const oldImageUrl of oldAccessory.images) {
-            const oldPublicId = getPublicIdFromUrl(oldImageUrl);
+          for (const oldImageObj of oldAccessory.images) {
+            const oldPublicId = getPublicIdFromUrl(oldImageObj.url || oldImageObj);
             if (oldPublicId) {
               await cloudinary.uploader.destroy(oldPublicId);
             }
@@ -178,8 +192,11 @@ exports.updateAccessory = async (req, res, next) => {
         }
       }
 
+      // Create image objects for the new images
+      const newImageObjects = newImageUrls.map(url => ({ id: crypto.randomUUID(), url }));
+
       updateData.image = newImageUrls[0];
-      updateData.images = newImageUrls.slice(1);
+      updateData.images = []; // Set images to empty array
     }
 
     const accessory = await Accessory.findByIdAndUpdate(
@@ -228,8 +245,8 @@ exports.deleteAccessory = async (req, res, next) => {
       }
     }
     if (accessory.images && accessory.images.length > 0) {
-      for (const imageUrl of accessory.images) {
-        const publicId = getPublicIdFromUrl(imageUrl);
+      for (const imageObj of accessory.images) {
+        const publicId = getPublicIdFromUrl(imageObj.url || imageObj);
         if (publicId) {
           await cloudinary.uploader.destroy(publicId);
         }

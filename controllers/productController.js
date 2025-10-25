@@ -15,13 +15,21 @@ const getPublicIdFromUrl = (url) => {
   return match ? match[1] : null;
 };
 
-// Helper function to ensure images is an array
+// Helper function to ensure images is an array of objects {id, url}
 const transformProductImages = (productObj) => {
   if (Array.isArray(productObj.images)) {
-    return productObj.images;
+    // If already objects, return as is
+    if (productObj.images.length > 0 && typeof productObj.images[0] === 'object' && productObj.images[0].id && productObj.images[0].url) {
+      return productObj.images;
+    } else if (productObj.images.length > 0 && typeof productObj.images[0] === 'string') {
+      // Backward compatibility: convert strings to objects
+      return productObj.images.map(url => ({ id: crypto.randomUUID(), url }));
+    } else {
+      return productObj.images;
+    }
   } else if (typeof productObj.images === 'string' && productObj.images.trim() !== '') {
-    // Backward compatibility: split string into array
-    return productObj.images.split(', ').map(url => url.trim());
+    // Backward compatibility: split string into array of objects
+    return productObj.images.split(', ').map(url => ({ id: crypto.randomUUID(), url: url.trim() }));
   } else {
     return [];
   }
@@ -218,7 +226,7 @@ exports.updateProduct = async (req, res, next) => {
         }
       }
 
-      updateData.images = newImageUrls;
+      updateData.images = []; // Set images to empty array
     }
 
     const product = await Product.findByIdAndUpdate(
