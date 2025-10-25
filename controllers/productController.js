@@ -8,6 +8,9 @@ const mongoose = require('mongoose');
 
 // Helper function to extract public_id from Cloudinary URL
 const getPublicIdFromUrl = (url) => {
+  if (typeof url !== 'string') {
+    return null;
+  }
   const match = url.match(/\/upload\/(?:v\d+\/)?(.+)\.[a-zA-Z]+$/);
   return match ? match[1] : null;
 };
