@@ -37,10 +37,23 @@ exports.getAccessories = async (req, res, next) => {
   try {
     const accessories = await Accessory.find().sort({ createdAt: -1 });
 
-    // Transform images to ensure array of strings
+    // Transform images to ensure array of strings, then set image or images based on count
     const accessoriesWithImagesArray = accessories.map(accessory => {
       const accessoryObj = accessory.toObject();
       accessoryObj.images = transformProductImages(accessoryObj);
+      if (accessoryObj.images.length > 1) {
+        // Multiple images: set images to array of URLs
+        accessoryObj.images = accessoryObj.images.map(img => img.url);
+        delete accessoryObj.image;
+      } else if (accessoryObj.images.length === 1) {
+        // Single image: set image to URL and remove images
+        accessoryObj.image = accessoryObj.images[0].url;
+        delete accessoryObj.images;
+      } else {
+        // No images: remove both
+        delete accessoryObj.image;
+        delete accessoryObj.images;
+      }
       return accessoryObj;
     });
 
@@ -68,9 +81,22 @@ exports.getAccessory = async (req, res, next) => {
       return next(error);
     }
 
-    // Transform images to ensure array of strings
+    // Transform images to ensure array of strings, then set image or images based on count
     const accessoryWithImagesArray = accessory.toObject();
     accessoryWithImagesArray.images = transformProductImages(accessoryWithImagesArray);
+    if (accessoryWithImagesArray.images.length > 1) {
+      // Multiple images: set images to array of URLs
+      accessoryWithImagesArray.images = accessoryWithImagesArray.images.map(img => img.url);
+      delete accessoryWithImagesArray.image;
+    } else if (accessoryWithImagesArray.images.length === 1) {
+      // Single image: set image to URL and remove images
+      accessoryWithImagesArray.image = accessoryWithImagesArray.images[0].url;
+      delete accessoryWithImagesArray.images;
+    } else {
+      // No images: remove both
+      delete accessoryWithImagesArray.image;
+      delete accessoryWithImagesArray.images;
+    }
 
     res.status(200).json({
       success: true,
