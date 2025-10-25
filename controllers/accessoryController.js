@@ -96,39 +96,35 @@ exports.createAccessory = async (req, res, next) => {
       return next(error);
     }
 
-    // Validate that at least one image is uploaded
-    if (!req.files || !req.files.images || req.files.images.length === 0) {
-      const error = new Error('Please upload at least one image');
+    // Validate that an image is uploaded
+    if (!req.file) {
+      const error = new Error('Please upload an image');
       error.statusCode = 400;
       return next(error);
     }
 
-    // Upload images to Cloudinary if provided
-    let imageUrls = [];
-    if (req.files && req.files.images && req.files.images.length > 0) {
-      for (const file of req.files.images) {
-        const imageResult = await new Promise((resolve, reject) => {
-          const uploadStream = cloudinary.uploader.upload_stream(
-            { folder: 'accessories' },
-            (error, result) => {
-              if (error) reject(error);
-              else resolve(result);
-            }
-          );
-          uploadStream.end(file.buffer);
-        });
-        imageUrls.push(imageResult.secure_url);
-      }
-    }
+    // Upload image to Cloudinary
+    const imageResult = await new Promise((resolve, reject) => {
+      const uploadStream = cloudinary.uploader.upload_stream(
+        { folder: 'accessories' },
+        (error, result) => {
+          if (error) reject(error);
+          else resolve(result);
+        }
+      );
+      uploadStream.end(req.file.buffer);
+    });
 
-    // Create image objects for the accessory
-    const imageObjects = imageUrls.map(url => ({ id: crypto.randomUUID(), url }));
+    const imageUrl = imageResult.secure_url;
+
+    // Create image object for the accessory
+    const imageObject = { id: crypto.randomUUID(), url: imageUrl };
 
     const accessory = await Accessory.create({
       name,
       price: parseFloat(price),
-      image: imageUrls[0], // First image as main image
-      images: [] // Set images to empty array
+      image: imageUrl, // Main image
+      images: [imageObject] // Set images to the array with single object
     });
 
     res.status(201).json({
@@ -196,7 +192,7 @@ exports.updateAccessory = async (req, res, next) => {
       const newImageObjects = newImageUrls.map(url => ({ id: crypto.randomUUID(), url }));
 
       updateData.image = newImageUrls[0];
-      updateData.images = []; // Set images to empty array
+      updateData.images = newImageObjects; // Set images to the new array of objects
     }
 
     const accessory = await Accessory.findByIdAndUpdate(
