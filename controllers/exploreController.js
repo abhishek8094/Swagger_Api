@@ -133,7 +133,7 @@ exports.createExploreProduct = async (req, res, next) => {
       price: parseFloat(price),
       category,
       size,
-      images: imageObjects,
+      images: [],
       image: imageObjects[0].url, // Set main image to first image
       isExplore: true
     });
