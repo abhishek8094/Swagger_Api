@@ -41,7 +41,7 @@ const swaggerOptions = {
     
     servers: [
       {
-        url: `https://blackwizard.cloud/`,
+        url: `http://localhost:3001/`,
         description: 'Development server'
       }
     ],
