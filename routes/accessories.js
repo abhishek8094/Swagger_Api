@@ -134,7 +134,7 @@ router.get('/:id', getAccessory);
  * @swagger
  * /api/accessories:
  *   post:
- *     summary: Create new accessory with image upload
+ *     summary: Create new accessory with single image upload
  *     tags: [Accessories]
  *     requestBody:
  *       required: true
@@ -156,7 +156,7 @@ router.get('/:id', getAccessory);
  *               image:
  *                 type: string
  *                 format: binary
- *                 description: Accessory image file
+ *                 description: Single accessory image file
  *     responses:
  *       201:
  *         description: Accessory created successfully
