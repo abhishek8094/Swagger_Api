@@ -26,17 +26,17 @@ exports.getAccessories = async (req, res, next) => {
   try {
     const accessories = await Accessory.find().sort({ createdAt: -1 });
 
-    // Transform images to ensure array of strings
-    const accessoriesWithImagesArray = accessories.map(accessory => {
+    // Remove images field from response
+    const accessoriesWithoutImages = accessories.map(accessory => {
       const accessoryObj = accessory.toObject();
-      accessoryObj.images = transformProductImages(accessoryObj);
+      delete accessoryObj.images;
       return accessoryObj;
     });
 
     res.status(200).json({
       success: true,
-      count: accessoriesWithImagesArray.length,
-      data: accessoriesWithImagesArray
+      count: accessoriesWithoutImages.length,
+      data: accessoriesWithoutImages
     });
   } catch (error) {
     error.statusCode = 400;
@@ -57,13 +57,13 @@ exports.getAccessory = async (req, res, next) => {
       return next(error);
     }
 
-    // Transform images to ensure array of strings
-    const accessoryWithImagesArray = accessory.toObject();
-    accessoryWithImagesArray.images = transformProductImages(accessoryWithImagesArray);
+    // Remove images field from response
+    const accessoryWithoutImages = accessory.toObject();
+    delete accessoryWithoutImages.images;
 
     res.status(200).json({
       success: true,
-      data: accessoryWithImagesArray
+      data: accessoryWithoutImages
     });
   } catch (error) {
     error.statusCode = 400;
@@ -86,36 +86,30 @@ exports.createAccessory = async (req, res, next) => {
       return next(error);
     }
 
-    // Validate that at least one image is uploaded
-    if (!req.files || !req.files.images || req.files.images.length === 0) {
-      const error = new Error('Please upload at least one image');
+    // Validate that an image is uploaded
+    if (!req.file) {
+      const error = new Error('Please upload an image');
       error.statusCode = 400;
       return next(error);
     }
 
-    // Upload images to Cloudinary if provided
-    let imageUrls = [];
-    if (req.files && req.files.images && req.files.images.length > 0) {
-      for (const file of req.files.images) {
-        const imageResult = await new Promise((resolve, reject) => {
-          const uploadStream = cloudinary.uploader.upload_stream(
-            { folder: 'accessories' },
-            (error, result) => {
-              if (error) reject(error);
-              else resolve(result);
-            }
-          );
-          uploadStream.end(file.buffer);
-        });
-        imageUrls.push(imageResult.secure_url);
-      }
-    }
+    // Upload image to Cloudinary
+    const imageResult = await new Promise((resolve, reject) => {
+      const uploadStream = cloudinary.uploader.upload_stream(
+        { folder: 'accessories' },
+        (error, result) => {
+          if (error) reject(error);
+          else resolve(result);
+        }
+      );
+      uploadStream.end(req.file.buffer);
+    });
 
     const accessory = await Accessory.create({
       name,
       price: parseFloat(price),
-      image: imageUrls[0], // First image as main image
-      images: [] // No additional images
+      image: imageResult.secure_url,
+      images: [] // Empty array for additional images
     });
 
     res.status(201).json({
