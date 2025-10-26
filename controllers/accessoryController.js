@@ -37,30 +37,17 @@ exports.getAccessories = async (req, res, next) => {
   try {
     const accessories = await Accessory.find().sort({ createdAt: -1 });
 
-    // Transform images to ensure array of objects, then set image or images based on count
-    const accessoriesWithImagesArray = accessories.map(accessory => {
+    // Remove images field from response
+    const accessoriesWithoutImages = accessories.map(accessory => {
       const accessoryObj = accessory.toObject();
-      accessoryObj.images = transformProductImages(accessoryObj);
-      if (accessoryObj.images.length === 1) {
-        // Single image: set image to URL and remove images
-        accessoryObj.image = accessoryObj.images[0].url;
-        delete accessoryObj.images;
-      } else if (accessoryObj.images.length > 1) {
-        // Multiple images: set images to array of URLs and remove image
-        accessoryObj.images = accessoryObj.images.map(img => img.url);
-        delete accessoryObj.image;
-      } else {
-        // No images: remove both
-        delete accessoryObj.image;
-        delete accessoryObj.images;
-      }
+      delete accessoryObj.images;
       return accessoryObj;
     });
 
     res.status(200).json({
       success: true,
-      count: accessoriesWithImagesArray.length,
-      data: accessoriesWithImagesArray
+      count: accessoriesWithoutImages.length,
+      data: accessoriesWithoutImages
     });
   } catch (error) {
     error.statusCode = 400;
@@ -81,26 +68,13 @@ exports.getAccessory = async (req, res, next) => {
       return next(error);
     }
 
-    // Transform images to ensure array of objects, then set image or images based on count
-    const accessoryWithImagesArray = accessory.toObject();
-    accessoryWithImagesArray.images = transformProductImages(accessoryWithImagesArray);
-    if (accessoryWithImagesArray.images.length === 1) {
-      // Single image: set image to URL and remove images
-      accessoryWithImagesArray.image = accessoryWithImagesArray.images[0].url;
-      delete accessoryWithImagesArray.images;
-    } else if (accessoryWithImagesArray.images.length > 1) {
-      // Multiple images: set images to array of URLs and remove image
-      accessoryWithImagesArray.images = accessoryWithImagesArray.images.map(img => img.url);
-      delete accessoryWithImagesArray.image;
-    } else {
-      // No images: remove both
-      delete accessoryWithImagesArray.image;
-      delete accessoryWithImagesArray.images;
-    }
+    // Remove images field from response
+    const accessoryWithoutImages = accessory.toObject();
+    delete accessoryWithoutImages.images;
 
     res.status(200).json({
       success: true,
-      data: accessoryWithImagesArray
+      data: accessoryWithoutImages
     });
   } catch (error) {
     error.statusCode = 400;
@@ -142,16 +116,11 @@ exports.createAccessory = async (req, res, next) => {
       uploadStream.end(req.file.buffer);
     });
 
-    const imageUrl = imageResult.secure_url;
-
-    // Create image object for the accessory
-    const imageObject = { id: crypto.randomUUID(), url: imageUrl };
-
     const accessory = await Accessory.create({
       name,
       price: parseFloat(price),
-      image: imageUrls[0], // First image as main image
-      images: [] // No additional images
+      image: imageResult.secure_url,
+      images: [] // Empty array for additional images
     });
 
     res.status(201).json({

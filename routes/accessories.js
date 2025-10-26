@@ -205,7 +205,7 @@ router.post('/', upload.single('image'), createAccessory);
  *                 items:
  *                   type: string
  *                   format: binary
- *                 description: New accessory image files (optional, multiple allowed)
+ *                 description: New accessory image files (optional)
  *     responses:
  *       200:
  *         description: Accessory updated successfully
@@ -221,7 +221,7 @@ router.post('/', upload.single('image'), createAccessory);
  *       404:
  *         description: Accessory not found
  */
-router.post('/update/:id', upload.array('images', 10), updateAccessory);
+router.post('/update/:id', upload.array('images'), updateAccessory);
 
 /**
  * @swagger
