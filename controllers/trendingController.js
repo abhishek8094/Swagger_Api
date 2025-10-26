@@ -29,6 +29,7 @@ exports.getTrendingProducts = async (req, res, next) => {
         price: productObj.price,
         image: productObj.image,
         subImg: productObj.subImg,
+        images: productObj.images && productObj.images.length > 0 ? transformProductImages(productObj) : [productObj.image],
         category: productObj.category
       };
     });
@@ -74,9 +75,13 @@ exports.getTrendingProduct = async (req, res, next) => {
       return next(error);
     }
 
+    // Transform images from string to array of strings
+    const productObj = product.toObject();
+    productObj.images = productObj.images && productObj.images.length > 0 ? transformProductImages(productObj) : [productObj.image];
+
     res.status(200).json({
       success: true,
-      data: product
+      data: productObj
     });
   } catch (error) {
     error.statusCode = 400;
@@ -128,9 +133,13 @@ exports.createTrendingProduct = async (req, res, next) => {
       isTrending: true
     });
 
+    // Transform images to ensure array of strings
+    const productObj = product.toObject();
+    productObj.images = productObj.images && productObj.images.length > 0 ? transformProductImages(productObj) : [productObj.image];
+
     res.status(201).json({
       success: true,
-      data: product
+      data: productObj
     });
   } catch (error) {
     error.statusCode = 400;
@@ -209,9 +218,13 @@ exports.updateTrendingProduct = async (req, res, next) => {
       return next(error);
     }
 
+    // Transform images to ensure array of strings
+    const productObj = product.toObject();
+    productObj.images = productObj.images && productObj.images.length > 0 ? transformProductImages(productObj) : [productObj.image];
+
     res.status(200).json({
       success: true,
-      data: product
+      data: productObj
     });
   } catch (error) {
     error.statusCode = 400;

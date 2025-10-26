@@ -39,7 +39,7 @@ const upload = multer({
  *       required:
  *         - name
  *         - price
- *         - image
+ *         - images
  *         - category
  *         - size
  *       properties:
@@ -179,7 +179,7 @@ router.get('/', getExploreCollection);
  *             required:
  *               - name
  *               - price
- *               - image
+ *               - images
  *               - size
  *             properties:
  *               name:
@@ -197,10 +197,12 @@ router.get('/', getExploreCollection);
  *               size:
  *                 type: string
  *                 description: Product size
- *               image:
- *                 type: string
- *                 format: binary
- *                 description: Product image file
+ *               images:
+ *                 type: array
+ *                 items:
+ *                   type: string
+ *                   format: binary
+ *                 description: Product image files
  *     responses:
  *       201:
  *         description: Product created for explore collection successfully
@@ -220,7 +222,7 @@ router.get('/', getExploreCollection);
  *             schema:
  *               $ref: '#/components/schemas/Error'
  */
-router.post('/', upload.array('images', 10), createExploreProduct);
+router.post('/', upload.single('image'), createExploreProduct);
 
 /**
  * @swagger
@@ -256,7 +258,7 @@ router.post('/', upload.array('images', 10), createExploreProduct);
  */
 router.get('/:id', getExploreProduct);
 
-router.post('/update/:id', upload.array('images', 10), updateExploreProduct);
+router.post('/update/:id', upload.single('image'), updateExploreProduct);
 
 /**
  * @swagger
