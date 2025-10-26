@@ -37,17 +37,17 @@ exports.getAccessories = async (req, res, next) => {
   try {
     const accessories = await Accessory.find().sort({ createdAt: -1 });
 
-    // Remove images field from response
-    const accessoriesWithoutImages = accessories.map(accessory => {
+    // Ensure images field is an array in response
+    const accessoriesWithImages = accessories.map(accessory => {
       const accessoryObj = accessory.toObject();
-      delete accessoryObj.images;
+      accessoryObj.images = transformProductImages(accessoryObj);
       return accessoryObj;
     });
 
     res.status(200).json({
       success: true,
-      count: accessoriesWithoutImages.length,
-      data: accessoriesWithoutImages
+      count: accessoriesWithImages.length,
+      data: accessoriesWithImages
     });
   } catch (error) {
     error.statusCode = 400;
@@ -68,13 +68,13 @@ exports.getAccessory = async (req, res, next) => {
       return next(error);
     }
 
-    // Remove images field from response
-    const accessoryWithoutImages = accessory.toObject();
-    delete accessoryWithoutImages.images;
+    // Ensure images field is an array in response
+    const accessoryWithImages = accessory.toObject();
+    accessoryWithImages.images = transformProductImages(accessoryWithImages);
 
     res.status(200).json({
       success: true,
-      data: accessoryWithoutImages
+      data: accessoryWithImages
     });
   } catch (error) {
     error.statusCode = 400;
