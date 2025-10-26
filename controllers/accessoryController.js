@@ -77,6 +77,7 @@ exports.getAccessory = async (req, res, next) => {
 exports.createAccessory = async (req, res, next) => {
   try {
     const { name, price } = req.body;
+
     // Validate required fields
     if (!name || !price) {
       const error = new Error('Please provide name and price');
