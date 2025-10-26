@@ -112,6 +112,7 @@ exports.getAccessory = async (req, res, next) => {
 // @route   POST /api/accessories
 // @access  Public
 exports.createAccessory = async (req, res, next) => {
+  
   try {
     const { name, price } = req.body;
 
