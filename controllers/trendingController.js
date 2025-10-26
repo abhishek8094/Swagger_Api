@@ -22,7 +22,6 @@ exports.getTrendingProducts = async (req, res, next) => {
 
     const trendingProducts = products.map(product => {
       const productObj = product.toObject();
-      productObj.images = transformProductImages(productObj);
       return {
         id: productObj._id,
         title: productObj.name,
@@ -30,7 +29,6 @@ exports.getTrendingProducts = async (req, res, next) => {
         price: productObj.price,
         image: productObj.image,
         subImg: productObj.subImg,
-        images: productObj.images,
         category: productObj.category
       };
     });
@@ -76,13 +74,9 @@ exports.getTrendingProduct = async (req, res, next) => {
       return next(error);
     }
 
-    // Transform images from string to array of strings
-    const productObj = product.toObject();
-    productObj.images = transformProductImages(productObj);
-
     res.status(200).json({
       success: true,
-      data: productObj
+      data: product
     });
   } catch (error) {
     error.statusCode = 400;
@@ -104,28 +98,24 @@ exports.createTrendingProduct = async (req, res, next) => {
       return next(error);
     }
 
-    // Check if files were uploaded
-    if (!req.files || !req.files.image || req.files.image.length === 0) {
-      const error = new Error('Please upload at least one image');
+    // Check if file was uploaded
+    if (!req.file) {
+      const error = new Error('Please upload an image');
       error.statusCode = 400;
       return next(error);
     }
 
-    // Upload images to Cloudinary
-    const imageUrls = [];
-    for (const file of req.files.image) {
-      const imageResult = await new Promise((resolve, reject) => {
-        const uploadStream = cloudinary.uploader.upload_stream(
-          { folder: 'trending' },
-          (error, result) => {
-            if (error) reject(error);
-            else resolve(result);
-          }
-        );
-        uploadStream.end(file.buffer);
-      });
-      imageUrls.push(imageResult.secure_url);
-    }
+    // Upload image to Cloudinary
+    const imageResult = await new Promise((resolve, reject) => {
+      const uploadStream = cloudinary.uploader.upload_stream(
+        { folder: 'trending' },
+        (error, result) => {
+          if (error) reject(error);
+          else resolve(result);
+        }
+      );
+      uploadStream.end(req.file.buffer);
+    });
 
     const product = await Product.create({
       name,
@@ -133,19 +123,14 @@ exports.createTrendingProduct = async (req, res, next) => {
       price: parseFloat(price),
       size,
       category,
-      images: imageUrls,
-      image: imageUrls[0], // Set main image to first image
-      subImg: imageUrls[1] || null, // Set subImg to second image if exists
+      image: imageResult.secure_url,
+      images: [], // Empty array for additional images
       isTrending: true
     });
 
-    // Transform images to ensure array of strings
-    const productObj = product.toObject();
-    productObj.images = transformProductImages(productObj);
-
     res.status(201).json({
       success: true,
-      data: productObj
+      data: product
     });
   } catch (error) {
     error.statusCode = 400;
@@ -183,38 +168,30 @@ exports.updateTrendingProduct = async (req, res, next) => {
       size
     };
 
-    // If new images uploaded, update images
-    if (req.files && req.files.image && req.files.image.length > 0) {
-      // Upload new images to Cloudinary
-      const newImageUrls = [];
-      for (const file of req.files.image) {
-        const imageResult = await new Promise((resolve, reject) => {
-          const uploadStream = cloudinary.uploader.upload_stream(
-            { folder: 'trending' },
-            (error, result) => {
-              if (error) reject(error);
-              else resolve(result);
-            }
-          );
-          uploadStream.end(file.buffer);
-        });
-        newImageUrls.push(imageResult.secure_url);
-      }
-
-      // Delete old images from Cloudinary
-      const oldProduct = await Product.findById(req.params.id);
-      if (oldProduct && oldProduct.images && oldProduct.images.length > 0) {
-        for (const oldImageUrl of oldProduct.images) {
-          const oldPublicId = getPublicIdFromUrl(oldImageUrl);
-          if (oldPublicId) {
-            await cloudinary.uploader.destroy(oldPublicId);
+    // If new image uploaded, update image
+    if (req.file) {
+      // Upload new image to Cloudinary
+      const imageResult = await new Promise((resolve, reject) => {
+        const uploadStream = cloudinary.uploader.upload_stream(
+          { folder: 'trending' },
+          (error, result) => {
+            if (error) reject(error);
+            else resolve(result);
           }
+        );
+        uploadStream.end(req.file.buffer);
+      });
+
+      // Delete old image from Cloudinary
+      const oldProduct = await Product.findById(req.params.id);
+      if (oldProduct && oldProduct.image) {
+        const oldPublicId = getPublicIdFromUrl(oldProduct.image);
+        if (oldPublicId) {
+          await cloudinary.uploader.destroy(oldPublicId);
         }
       }
 
-      updateData.images = newImageUrls;
-      updateData.image = newImageUrls[0]; // Set main image to first image
-      updateData.subImg = newImageUrls[1] || null; // Set subImg to second image if exists
+      updateData.image = imageResult.secure_url;
     }
 
     const product = await Product.findByIdAndUpdate(
@@ -232,13 +209,9 @@ exports.updateTrendingProduct = async (req, res, next) => {
       return next(error);
     }
 
-    // Transform images to ensure array of strings
-    const productObj = product.toObject();
-    productObj.images = transformProductImages(productObj);
-
     res.status(200).json({
       success: true,
-      data: productObj
+      data: product
     });
   } catch (error) {
     error.statusCode = 400;
@@ -259,13 +232,11 @@ exports.deleteTrendingProduct = async (req, res, next) => {
       return next(error);
     }
 
-    // Delete images from Cloudinary
-    if (product.images && product.images.length > 0) {
-      for (const imageUrl of product.images) {
-        const publicId = getPublicIdFromUrl(imageUrl);
-        if (publicId) {
-          await cloudinary.uploader.destroy(publicId);
-        }
+    // Delete image from Cloudinary
+    if (product.image) {
+      const publicId = getPublicIdFromUrl(product.image);
+      if (publicId) {
+        await cloudinary.uploader.destroy(publicId);
       }
     }
 
