@@ -134,7 +134,7 @@ router.get('/:id', getAccessory);
  * @swagger
  * /api/accessories:
  *   post:
- *     summary: Create new accessory with image upload
+ *     summary: Create new accessory with single image upload
  *     tags: [Accessories]
  *     requestBody:
  *       required: true
@@ -156,7 +156,7 @@ router.get('/:id', getAccessory);
  *               image:
  *                 type: string
  *                 format: binary
- *                 description: Accessory image file
+ *                 description: Single accessory image file
  *     responses:
  *       201:
  *         description: Accessory created successfully
@@ -200,10 +200,12 @@ router.post('/', upload.single('image'), createAccessory);
  *               price:
  *                 type: number
  *                 description: Accessory price
- *               image:
- *                 type: string
- *                 format: binary
- *                 description: New accessory image file (optional)
+ *               images:
+ *                 type: array
+ *                 items:
+ *                   type: string
+ *                   format: binary
+ *                 description: New accessory image files (optional, multiple allowed)
  *     responses:
  *       200:
  *         description: Accessory updated successfully
@@ -219,7 +221,7 @@ router.post('/', upload.single('image'), createAccessory);
  *       404:
  *         description: Accessory not found
  */
-router.post('/update/:id', upload.single('image'), updateAccessory);
+router.post('/update/:id', upload.array('images', 10), updateAccessory);
 
 /**
  * @swagger
