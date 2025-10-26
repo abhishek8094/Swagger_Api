@@ -131,7 +131,7 @@ exports.createExploreProduct = async (req, res, next) => {
       price: parseFloat(price),
       category,
       size,
-      images: [imageResult.secure_url],
+      images: [{ id: crypto.randomUUID(), url: imageResult.secure_url }],
       image: imageResult.secure_url,
       isExplore: true
     });
@@ -201,7 +201,7 @@ exports.updateExploreProduct = async (req, res, next) => {
         }
       }
 
-      updateData.images = [imageResult.secure_url];
+      updateData.images = [{ id: crypto.randomUUID(), url: imageResult.secure_url }];
       updateData.image = imageResult.secure_url;
     }
 
