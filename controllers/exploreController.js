@@ -59,7 +59,7 @@ exports.getExploreCollection = async (req, res, next) => {
           title: product.name,
           price: product.price,
           image: product.image,
-          images: [],
+          images: product.images,
           category: product.category
         });
       }
