@@ -114,7 +114,7 @@ exports.createAccessory = async (req, res, next) => {
       name,
       price: parseFloat(price),
       image: imageUrls[0], // First image as main image
-      images: imageUrls.slice(1) // Rest as additional images
+      images: [] // No additional images
     });
 
     res.status(201).json({
