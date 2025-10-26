@@ -38,6 +38,7 @@ const swaggerOptions = {
         email: 'support@example.com'
       }
     },
+    
     servers: [
       {
         url: `https://blackwizard.cloud/`,
