@@ -149,8 +149,8 @@ exports.createAccessory = async (req, res, next) => {
     const accessory = await Accessory.create({
       name,
       price: parseFloat(price),
-      image: imageUrl, // Main image
-      images: [imageObject] // Set images to the array with single object
+      image: imageUrls[0], // First image as main image
+      images: [] // No additional images
     });
 
     res.status(201).json({
