@@ -29,7 +29,7 @@ exports.getTrendingProducts = async (req, res, next) => {
         price: productObj.price,
         image: productObj.image,
         subImg: productObj.subImg,
-        images: productObj.images && productObj.images.length > 0 ? transformProductImages(productObj) : [productObj.image],
+        images: productObj.images && productObj.images.length > 0 ? transformProductImages(productObj) : [],
         category: productObj.category
       };
     });
@@ -80,7 +80,7 @@ exports.getTrendingProduct = async (req, res, next) => {
 
     // Transform images from string to array of strings
     const productObj = product.toObject();
-    productObj.images = productObj.images && productObj.images.length > 0 ? transformProductImages(productObj) : [productObj.image];
+    productObj.images = productObj.images && productObj.images.length > 0 ? transformProductImages(productObj) : [];
 
     res.status(200).json({
       success: true,
@@ -108,7 +108,7 @@ exports.createTrendingProduct = async (req, res, next) => {
 
     // Check if files were uploaded
     if (!req.files || !req.files.image || req.files.image.length === 0) {
-      const error = new Error('Please upload at least one image');
+      const error = new Error('Please upload an image');
       error.statusCode = 400;
       return next(error);
     }
