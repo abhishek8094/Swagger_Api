@@ -150,13 +150,14 @@ exports.createExploreProduct = async (req, res, next) => {
 
       const imageResults = await Promise.all(uploadPromises);
 
-      // Prepare images array
-      images = imageResults.map(result => ({
+      // Set main image
+      mainImage = imageResults[0].secure_url;
+
+      // Prepare images array (additional images, excluding main)
+      images = imageResults.length > 1 ? imageResults.slice(1).map(result => ({
         id: crypto.randomUUID(),
         url: result.secure_url
-      }));
-
-      mainImage = imageResults[0].secure_url; // Set first image as main image
+      })) : [];
     }
 
     const product = await Product.create({
@@ -181,7 +182,7 @@ exports.createExploreProduct = async (req, res, next) => {
         category: product.category,
         size: product.size,
         image: mainImage,
-        images: images
+        images: transformProductImages(product)
       }
     });
   } catch (error) {
