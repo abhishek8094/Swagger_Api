@@ -206,36 +206,39 @@ exports.updateExploreProduct = async (req, res, next) => {
       size
     };
 
-    // If new images uploaded, append to existing images
-    if (req.files && req.files.length > 0) {
-      // Upload new images to Cloudinary
-      const uploadPromises = req.files.map(file => {
-        return new Promise((resolve, reject) => {
-          const uploadStream = cloudinary.uploader.upload_stream(
-            { folder: 'explore' },
-            (error, result) => {
-              if (error) reject(error);
-              else resolve(result);
-            }
-          );
-          uploadStream.end(file.buffer);
-        });
+    // If new image uploaded, append to existing images
+    if (req.file) {
+      // Upload new image to Cloudinary
+      const uploadStream = cloudinary.uploader.upload_stream(
+        { folder: 'explore' },
+        (error, result) => {
+          if (error) {
+            const uploadError = new Error('Image upload failed');
+            uploadError.statusCode = 500;
+            return next(uploadError);
+          }
+        }
+      );
+      uploadStream.end(req.file.buffer);
+
+      // Wait for upload to complete
+      const imageResult = await new Promise((resolve, reject) => {
+        uploadStream.on('finish', () => resolve(uploadStream.result));
+        uploadStream.on('error', reject);
       });
 
-      const imageResults = await Promise.all(uploadPromises);
-
-      // Prepare new images array
-      const newImages = imageResults.map(result => ({
+      // Prepare new image object
+      const newImage = {
         id: crypto.randomUUID(),
-        url: result.secure_url
-      }));
+        url: imageResult.secure_url
+      };
 
-      // Append new images to existing ones
-      updateData.images = [...transformProductImages(product), ...newImages];
+      // Append new image to existing ones
+      updateData.images = [...transformProductImages(product), newImage];
 
       // Update main image if it's the first update or if no main image
       if (!product.image || product.images.length === 0) {
-        updateData.image = imageResults[0].secure_url;
+        updateData.image = imageResult.secure_url;
       }
     }
 
