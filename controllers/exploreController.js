@@ -115,34 +115,35 @@ exports.createExploreProduct = async (req, res, next) => {
   try {
     const { name, description, price, category, size } = req.body;
 
-    // Check if files were uploaded
-    if (!req.files || req.files.length === 0) {
-      const error = new Error('Please upload at least one image');
-      error.statusCode = 400;
-      return next(error);
-    }
+    let images = [];
+    let mainImage = null;
 
-    // Upload images to Cloudinary
-    const uploadPromises = req.files.map(file => {
-      return new Promise((resolve, reject) => {
-        const uploadStream = cloudinary.uploader.upload_stream(
-          { folder: 'explore' },
-          (error, result) => {
-            if (error) reject(error);
-            else resolve(result);
-          }
-        );
-        uploadStream.end(file.buffer);
+    // If files were uploaded, upload to Cloudinary
+    if (req.files && req.files.length > 0) {
+      // Upload images to Cloudinary
+      const uploadPromises = req.files.map(file => {
+        return new Promise((resolve, reject) => {
+          const uploadStream = cloudinary.uploader.upload_stream(
+            { folder: 'explore' },
+            (error, result) => {
+              if (error) reject(error);
+              else resolve(result);
+            }
+          );
+          uploadStream.end(file.buffer);
+        });
       });
-    });
 
-    const imageResults = await Promise.all(uploadPromises);
+      const imageResults = await Promise.all(uploadPromises);
 
-    // Prepare images array
-    const images = imageResults.map(result => ({
-      id: crypto.randomUUID(),
-      url: result.secure_url
-    }));
+      // Prepare images array
+      images = imageResults.map(result => ({
+        id: crypto.randomUUID(),
+        url: result.secure_url
+      }));
+
+      mainImage = imageResults[0].secure_url; // Set first image as main image
+    }
 
     const product = await Product.create({
       name,
@@ -151,7 +152,7 @@ exports.createExploreProduct = async (req, res, next) => {
       category,
       size,
       images: images,
-      image: imageResults[0].secure_url, // Set first image as main image
+      image: mainImage,
       isExplore: true
     });
 
@@ -165,7 +166,7 @@ exports.createExploreProduct = async (req, res, next) => {
         price: product.price,
         category: product.category,
         size: product.size,
-        image: imageResults[0].secure_url,
+        image: mainImage,
         images: images
       }
     });
