@@ -10,24 +10,30 @@ const getPublicIdFromUrl = (url) => {
   return match ? match[1] : null;
 };
 
-// Helper function to ensure images is an array of objects {id, url}
+// Helper function to ensure images is an array of objects {id, url}, excluding the main image
 const transformProductImages = (productObj) => {
+  let images = [];
   if (Array.isArray(productObj.images)) {
     // If already objects, return as is
     if (productObj.images.length > 0 && typeof productObj.images[0] === 'object' && productObj.images[0].id && productObj.images[0].url) {
-      return productObj.images;
+      images = productObj.images;
     } else if (productObj.images.length > 0 && typeof productObj.images[0] === 'string') {
       // Backward compatibility: convert strings to objects
-      return productObj.images.map(url => ({ id: crypto.randomUUID(), url }));
+      images = productObj.images.map(url => ({ id: crypto.randomUUID(), url }));
     } else {
-      return productObj.images;
+      images = productObj.images;
     }
   } else if (typeof productObj.images === 'string' && productObj.images.trim() !== '') {
     // Backward compatibility: split string into array of objects
-    return productObj.images.split(', ').map(url => ({ id: crypto.randomUUID(), url: url.trim() }));
-  } else {
-    return [];
+    images = productObj.images.split(', ').map(url => ({ id: crypto.randomUUID(), url: url.trim() }));
   }
+
+  // Filter out the main image URL from images array
+  if (productObj.image) {
+    images = images.filter(img => img.url !== productObj.image);
+  }
+
+  return images;
 };
 
 // @desc    Get explore collection
@@ -59,7 +65,7 @@ exports.getExploreCollection = async (req, res, next) => {
           title: product.name,
           price: product.price,
           image: product.image,
-          images: product.images,
+          images: transformProductImages(product),
           category: product.category
         });
       }
@@ -91,7 +97,10 @@ exports.getExploreProduct = async (req, res, next) => {
 
     res.status(200).json({
       success: true,
-      data: product
+      data: {
+        ...product.toObject(),
+        images: transformProductImages(product)
+      }
     });
   } catch (error) {
     error.statusCode = 400;
@@ -106,24 +115,34 @@ exports.createExploreProduct = async (req, res, next) => {
   try {
     const { name, description, price, category, size } = req.body;
 
-    // Check if file was uploaded
-    if (!req.file) {
-      const error = new Error('Please upload an image');
+    // Check if files were uploaded
+    if (!req.files || req.files.length === 0) {
+      const error = new Error('Please upload at least one image');
       error.statusCode = 400;
       return next(error);
     }
 
-    // Upload image to Cloudinary
-    const imageResult = await new Promise((resolve, reject) => {
-      const uploadStream = cloudinary.uploader.upload_stream(
-        { folder: 'explore' },
-        (error, result) => {
-          if (error) reject(error);
-          else resolve(result);
-        }
-      );
-      uploadStream.end(req.file.buffer);
+    // Upload images to Cloudinary
+    const uploadPromises = req.files.map(file => {
+      return new Promise((resolve, reject) => {
+        const uploadStream = cloudinary.uploader.upload_stream(
+          { folder: 'explore' },
+          (error, result) => {
+            if (error) reject(error);
+            else resolve(result);
+          }
+        );
+        uploadStream.end(file.buffer);
+      });
     });
+
+    const imageResults = await Promise.all(uploadPromises);
+
+    // Prepare images array
+    const images = imageResults.map(result => ({
+      id: crypto.randomUUID(),
+      url: result.secure_url
+    }));
 
     const product = await Product.create({
       name,
@@ -131,8 +150,8 @@ exports.createExploreProduct = async (req, res, next) => {
       price: parseFloat(price),
       category,
       size,
-      images: [{ id: crypto.randomUUID(), url: imageResult.secure_url }],
-      image: imageResult.secure_url,
+      images: images,
+      image: imageResults[0].secure_url, // Set first image as main image
       isExplore: true
     });
 
@@ -146,8 +165,8 @@ exports.createExploreProduct = async (req, res, next) => {
         price: product.price,
         category: product.category,
         size: product.size,
-        image: imageResult.secure_url,
-        images: [imageResult.secure_url]
+        image: imageResults[0].secure_url,
+        images: images
       }
     });
   } catch (error) {
@@ -179,30 +198,37 @@ exports.updateExploreProduct = async (req, res, next) => {
       size
     };
 
-    // If new image uploaded, update image
-    if (req.file) {
-      // Upload new image to Cloudinary
-      const imageResult = await new Promise((resolve, reject) => {
-        const uploadStream = cloudinary.uploader.upload_stream(
-          { folder: 'explore' },
-          (error, result) => {
-            if (error) reject(error);
-            else resolve(result);
-          }
-        );
-        uploadStream.end(req.file.buffer);
+    // If new images uploaded, append to existing images
+    if (req.files && req.files.length > 0) {
+      // Upload new images to Cloudinary
+      const uploadPromises = req.files.map(file => {
+        return new Promise((resolve, reject) => {
+          const uploadStream = cloudinary.uploader.upload_stream(
+            { folder: 'explore' },
+            (error, result) => {
+              if (error) reject(error);
+              else resolve(result);
+            }
+          );
+          uploadStream.end(file.buffer);
+        });
       });
 
-      // Delete old image from Cloudinary
-      if (product.image) {
-        const oldPublicId = getPublicIdFromUrl(product.image);
-        if (oldPublicId) {
-          await cloudinary.uploader.destroy(oldPublicId);
-        }
-      }
+      const imageResults = await Promise.all(uploadPromises);
 
-      updateData.images = [{ id: crypto.randomUUID(), url: imageResult.secure_url }];
-      updateData.image = imageResult.secure_url;
+      // Prepare new images array
+      const newImages = imageResults.map(result => ({
+        id: crypto.randomUUID(),
+        url: result.secure_url
+      }));
+
+      // Append new images to existing ones
+      updateData.images = [...transformProductImages(product), ...newImages];
+
+      // Update main image if it's the first update or if no main image
+      if (!product.image || product.images.length === 0) {
+        updateData.image = imageResults[0].secure_url;
+      }
     }
 
     const updatedProduct = await Product.findByIdAndUpdate(
