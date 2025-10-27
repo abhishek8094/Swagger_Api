@@ -106,24 +106,53 @@ exports.createTrendingProduct = async (req, res, next) => {
       return next(error);
     }
 
-    // Check if file was uploaded
-    if (!req.file) {
-      const error = new Error('Please upload an image');
+    // Check if files were uploaded
+    if (!req.files || !req.files.image || req.files.image.length === 0) {
+      const error = new Error('Please upload at least one image');
       error.statusCode = 400;
       return next(error);
     }
 
-    // Upload image to Cloudinary
-    const imageResult = await new Promise((resolve, reject) => {
-      const uploadStream = cloudinary.uploader.upload_stream(
-        { folder: 'trending' },
-        (error, result) => {
-          if (error) reject(error);
-          else resolve(result);
-        }
-      );
-      uploadStream.end(req.file.buffer);
-    });
+    const imageFiles = req.files.image;
+    const subImgFile = req.files.subImg ? req.files.subImg[0] : null;
+
+    // Upload all images to Cloudinary
+    const uploadPromises = imageFiles.map(file =>
+      new Promise((resolve, reject) => {
+        const uploadStream = cloudinary.uploader.upload_stream(
+          { folder: 'trending' },
+          (error, result) => {
+            if (error) reject(error);
+            else resolve(result);
+          }
+        );
+        uploadStream.end(file.buffer);
+      })
+    );
+
+    const imageResults = await Promise.all(uploadPromises);
+
+    // Upload subImg if provided
+    let subImgUrl = null;
+    if (subImgFile) {
+      const subImgResult = await new Promise((resolve, reject) => {
+        const uploadStream = cloudinary.uploader.upload_stream(
+          { folder: 'trending' },
+          (error, result) => {
+            if (error) reject(error);
+            else resolve(result);
+          }
+        );
+        uploadStream.end(subImgFile.buffer);
+      });
+      subImgUrl = subImgResult.secure_url;
+    }
+
+    // Create images array with objects {id, url}
+    const imagesArray = imageResults.map(result => ({
+      id: crypto.randomUUID(),
+      url: result.secure_url
+    }));
 
     const product = await Product.create({
       name,
@@ -131,14 +160,15 @@ exports.createTrendingProduct = async (req, res, next) => {
       price: parseFloat(price),
       size,
       category,
-      image: imageResult.secure_url,
-      images: [], // Empty array for additional images
+      image: imageResults[0].secure_url, // Main image is the first uploaded image
+      subImg: subImgUrl,
+      images: imagesArray,
       isTrending: true
     });
 
-    // Transform images to ensure array of strings
+    // Transform images to ensure array of objects
     const productObj = product.toObject();
-    productObj.images = productObj.images && productObj.images.length > 0 ? transformProductImages(productObj) : [productObj.image];
+    productObj.images = transformProductImages(productObj);
 
     res.status(201).json({
       success: true,
@@ -180,10 +210,61 @@ exports.updateTrendingProduct = async (req, res, next) => {
       size
     };
 
-    // If new image uploaded, update image
-    if (req.file) {
-      // Upload new image to Cloudinary
-      const imageResult = await new Promise((resolve, reject) => {
+    // If new images uploaded, update images
+    if (req.files && req.files.image && req.files.image.length > 0) {
+      const imageFiles = req.files.image;
+
+      // Upload new images to Cloudinary
+      const uploadPromises = imageFiles.map(file =>
+        new Promise((resolve, reject) => {
+          const uploadStream = cloudinary.uploader.upload_stream(
+            { folder: 'trending' },
+            (error, result) => {
+              if (error) reject(error);
+              else resolve(result);
+            }
+          );
+          uploadStream.end(file.buffer);
+        })
+      );
+
+      const imageResults = await Promise.all(uploadPromises);
+
+      // Delete old images from Cloudinary
+      if (existingProduct.images && existingProduct.images.length > 0) {
+        const deletePromises = existingProduct.images.map(img => {
+          if (typeof img === 'string') {
+            const publicId = getPublicIdFromUrl(img);
+            if (publicId) {
+              return cloudinary.uploader.destroy(publicId);
+            }
+          } else if (img.url) {
+            const publicId = getPublicIdFromUrl(img.url);
+            if (publicId) {
+              return cloudinary.uploader.destroy(publicId);
+            }
+          }
+          return Promise.resolve();
+        });
+        await Promise.all(deletePromises);
+      }
+
+      // Create new images array
+      const imagesArray = imageResults.map(result => ({
+        id: crypto.randomUUID(),
+        url: result.secure_url
+      }));
+
+      updateData.image = imageResults[0].secure_url; // Main image is the first uploaded image
+      updateData.images = imagesArray;
+    }
+
+    // If new subImg uploaded, update subImg
+    if (req.files && req.files.subImg && req.files.subImg.length > 0) {
+      const subImgFile = req.files.subImg[0];
+
+      // Upload new subImg to Cloudinary
+      const subImgResult = await new Promise((resolve, reject) => {
         const uploadStream = cloudinary.uploader.upload_stream(
           { folder: 'trending' },
           (error, result) => {
@@ -191,19 +272,18 @@ exports.updateTrendingProduct = async (req, res, next) => {
             else resolve(result);
           }
         );
-        uploadStream.end(req.file.buffer);
+        uploadStream.end(subImgFile.buffer);
       });
 
-      // Delete old image from Cloudinary
-      const oldProduct = await Product.findById(req.params.id);
-      if (oldProduct && oldProduct.image) {
-        const oldPublicId = getPublicIdFromUrl(oldProduct.image);
-        if (oldPublicId) {
-          await cloudinary.uploader.destroy(oldPublicId);
+      // Delete old subImg from Cloudinary
+      if (existingProduct.subImg) {
+        const oldSubImgPublicId = getPublicIdFromUrl(existingProduct.subImg);
+        if (oldSubImgPublicId) {
+          await cloudinary.uploader.destroy(oldSubImgPublicId);
         }
       }
 
-      updateData.image = imageResult.secure_url;
+      updateData.subImg = subImgResult.secure_url;
     }
 
     const product = await Product.findByIdAndUpdate(
@@ -221,9 +301,9 @@ exports.updateTrendingProduct = async (req, res, next) => {
       return next(error);
     }
 
-    // Transform images to ensure array of strings
+    // Transform images to ensure array of objects
     const productObj = product.toObject();
-    productObj.images = productObj.images && productObj.images.length > 0 ? transformProductImages(productObj) : [productObj.image];
+    productObj.images = transformProductImages(productObj);
 
     res.status(200).json({
       success: true,
@@ -248,11 +328,30 @@ exports.deleteTrendingProduct = async (req, res, next) => {
       return next(error);
     }
 
-    // Delete image from Cloudinary
-    if (product.image) {
-      const publicId = getPublicIdFromUrl(product.image);
-      if (publicId) {
-        await cloudinary.uploader.destroy(publicId);
+    // Delete all images from Cloudinary
+    if (product.images && product.images.length > 0) {
+      const deletePromises = product.images.map(img => {
+        if (typeof img === 'string') {
+          const publicId = getPublicIdFromUrl(img);
+          if (publicId) {
+            return cloudinary.uploader.destroy(publicId);
+          }
+        } else if (img.url) {
+          const publicId = getPublicIdFromUrl(img.url);
+          if (publicId) {
+            return cloudinary.uploader.destroy(publicId);
+          }
+        }
+        return Promise.resolve();
+      });
+      await Promise.all(deletePromises);
+    }
+
+    // Delete subImg from Cloudinary
+    if (product.subImg) {
+      const subImgPublicId = getPublicIdFromUrl(product.subImg);
+      if (subImgPublicId) {
+        await cloudinary.uploader.destroy(subImgPublicId);
       }
     }
 

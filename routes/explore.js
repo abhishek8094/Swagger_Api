@@ -39,7 +39,7 @@ const upload = multer({
  *       required:
  *         - name
  *         - price
- *         - images
+ *         - image
  *         - category
  *         - size
  *       properties:
@@ -179,7 +179,7 @@ router.get('/', getExploreCollection);
  *             required:
  *               - name
  *               - price
- *               - images
+ *               - image
  *               - size
  *             properties:
  *               name:
@@ -197,12 +197,10 @@ router.get('/', getExploreCollection);
  *               size:
  *                 type: string
  *                 description: Product size
- *               images:
- *                 type: array
- *                 items:
- *                   type: string
- *                   format: binary
- *                 description: Product image files
+ *               image:
+ *                 type: string
+ *                 format: binary
+ *                 description: Product image file
  *     responses:
  *       201:
  *         description: Product created for explore collection successfully
