@@ -30,6 +30,12 @@ const upload = multer({
   }
 });
 
+// Upload fields for multiple images and optional subImg
+const uploadFields = upload.fields([
+  { name: 'image', maxCount: 10 },
+  { name: 'subImg', maxCount: 1 }
+]);
+
 /**
  * @swagger
  * tags:
@@ -163,7 +169,7 @@ router.get('/', getTrendingProducts);
  *             schema:
  *               $ref: '#/components/schemas/Error'
  */
-router.post('/', upload.array('image', 10), createTrendingProduct);
+router.post('/', uploadFields, createTrendingProduct);
 
 /**
  * @swagger
@@ -261,7 +267,7 @@ router.get('/:id', getTrendingProduct);
  *             schema:
  *               $ref: '#/components/schemas/Error'
  */
-router.post('/update/:id', upload.array('image', 10), updateTrendingProduct);
+router.post('/update/:id', uploadFields, updateTrendingProduct);
 
 /**
  * @swagger

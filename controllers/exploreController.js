@@ -122,8 +122,8 @@ exports.createExploreProduct = async (req, res, next) => {
       return next(error);
     }
 
-    // Validate that at least one image is uploaded
-    if (!req.files || req.files.length === 0) {
+    // Validate that an image is uploaded
+    if (!req.file) {
       const error = new Error('Please add an image');
       error.statusCode = 400;
       return next(error);
@@ -132,33 +132,25 @@ exports.createExploreProduct = async (req, res, next) => {
     let images = [];
     let mainImage = null;
 
-    // Upload images to Cloudinary
-    if (req.files && req.files.length > 0) {
-      // Upload images to Cloudinary
-      const uploadPromises = req.files.map(file => {
-        return new Promise((resolve, reject) => {
-          const uploadStream = cloudinary.uploader.upload_stream(
-            { folder: 'explore' },
-            (error, result) => {
-              if (error) reject(error);
-              else resolve(result);
-            }
-          );
-          uploadStream.end(file.buffer);
-        });
-      });
+    // Upload single image to Cloudinary
+    const uploadStream = cloudinary.uploader.upload_stream(
+      { folder: 'explore' },
+      (error, result) => {
+        if (error) {
+          const uploadError = new Error('Image upload failed');
+          uploadError.statusCode = 500;
+          return next(uploadError);
+        }
+        mainImage = result.secure_url;
+      }
+    );
+    uploadStream.end(req.file.buffer);
 
-      const imageResults = await Promise.all(uploadPromises);
-
-      // Set main image
-      mainImage = imageResults[0].secure_url;
-
-      // Prepare images array (additional images, excluding main)
-      images = imageResults.length > 1 ? imageResults.slice(1).map(result => ({
-        id: crypto.randomUUID(),
-        url: result.secure_url
-      })) : [];
-    }
+    // Wait for upload to complete
+    await new Promise((resolve, reject) => {
+      uploadStream.on('finish', resolve);
+      uploadStream.on('error', reject);
+    });
 
     const product = await Product.create({
       name,
