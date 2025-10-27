@@ -115,10 +115,24 @@ exports.createExploreProduct = async (req, res, next) => {
   try {
     const { name, description, price, category, size } = req.body;
 
+    // Validate required fields
+    if (!name || !price || !category || !size) {
+      const error = new Error('Please provide name, price, category, and size');
+      error.statusCode = 400;
+      return next(error);
+    }
+
+    // Validate that at least one image is uploaded
+    if (!req.files || req.files.length === 0) {
+      const error = new Error('Please add an image');
+      error.statusCode = 400;
+      return next(error);
+    }
+
     let images = [];
     let mainImage = null;
 
-    // If files were uploaded, upload to Cloudinary
+    // Upload images to Cloudinary
     if (req.files && req.files.length > 0) {
       // Upload images to Cloudinary
       const uploadPromises = req.files.map(file => {
