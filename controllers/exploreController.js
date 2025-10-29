@@ -129,28 +129,18 @@ exports.createExploreProduct = async (req, res, next) => {
       return next(error);
     }
 
-    let images = [];
-    let mainImage = null;
-
-    // Upload single image to Cloudinary
-    const uploadStream = cloudinary.uploader.upload_stream(
-      { folder: 'explore' },
-      (error, result) => {
-        if (error) {
-          const uploadError = new Error('Image upload failed');
-          uploadError.statusCode = 500;
-          return next(uploadError);
+    // Upload image to Cloudinary
+    const imageResult = await new Promise((resolve, reject) => {
+      const uploadStream = cloudinary.uploader.upload_stream(
+        { folder: 'explore' },
+        (error, result) => {
+          if (error) reject(error);
+          else resolve(result);
         }
-        mainImage = result.secure_url;
-      }
-    );
-    uploadStream.end(req.file.buffer);
-
-    // Wait for upload to complete
-    await new Promise((resolve, reject) => {
-      uploadStream.on('finish', resolve);
-      uploadStream.on('error', reject);
+      );
+      uploadStream.end(req.file.buffer);
     });
+    const mainImage = imageResult.secure_url;
 
     const product = await Product.create({
       name,
@@ -158,7 +148,7 @@ exports.createExploreProduct = async (req, res, next) => {
       price: parseFloat(price),
       category,
       size,
-      images: images,
+      images: [],
       image: mainImage,
       isExplore: true
     });
