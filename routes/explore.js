@@ -39,7 +39,6 @@ const upload = multer({
  *       required:
  *         - name
  *         - price
- *         - image
  *         - category
  *         - size
  *       properties:
